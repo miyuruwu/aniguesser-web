@@ -110,21 +110,12 @@ export default function CharacterGuesser() {
           <img
             src={current.characterImageUrl}
             alt="Guess this character"
-            className={`w-full h-full object-cover object-top transition-all duration-500 ${
-              !state.revealed ? "blur-md scale-105" : ""
-            }`}
+            className="w-full h-full object-cover object-top"
             onError={(e) => {
               (e.target as HTMLImageElement).src =
                 "https://via.placeholder.com/400x400/13132a/ff6b9d?text=Character";
             }}
           />
-          {!state.revealed && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <p className="text-white/70 text-sm font-medium bg-black/50 px-4 py-2 rounded-full">
-                👤 Who is this?
-              </p>
-            </div>
-          )}
         </div>
       </Card>
 
