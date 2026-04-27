@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Tv, ChevronRight, Trophy, Star } from "lucide-react";
 import { Anime } from "@/types/anime";
@@ -13,7 +13,8 @@ function pickRandom(exclude?: number): Anime {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-type GuessState = {
+type RoundState = {
+  question: Anime;
   characterGuess: string;
   seriesGuess: string;
   characterCorrect: boolean | null;
@@ -21,49 +22,54 @@ type GuessState = {
   revealed: boolean;
 };
 
-export default function CharacterGuesser() {
-  const [current, setCurrent] = useState<Anime>(() => pickRandom());
-  const [score, setScore] = useState(0);
-  const [gamesPlayed, setGamesPlayed] = useState(0);
-  const [state, setState] = useState<GuessState>({
+function createRound(excludeId?: number): RoundState {
+  return {
+    question: pickRandom(excludeId),
     characterGuess: "",
     seriesGuess: "",
     characterCorrect: null,
     seriesCorrect: null,
     revealed: false,
-  });
+  };
+}
+
+export default function CharacterGuesser() {
+  const [round, setRound] = useState<RoundState>(() => createRound());
+  const [score, setScore] = useState(0);
+  const [gamesPlayed, setGamesPlayed] = useState(0);
+
+  const imageSrc = round.question.characterImageUrl?.trim() ?? "";
+  const hasValidImage = imageSrc.length > 0;
+  const [imageLoading, setImageLoading] = useState(hasValidImage);
+
+  useEffect(() => {
+    setImageLoading(hasValidImage);
+  }, [round.question.id, hasValidImage]);
 
   const handleSubmit = useCallback(() => {
-    if (state.revealed) return;
+    if (round.revealed) return;
 
     const charCorrect =
-      state.characterGuess.trim().toLowerCase() ===
-      current.characterName.toLowerCase();
+      round.characterGuess.trim().toLowerCase() ===
+      round.question.characterName.toLowerCase();
     const seriesCorrect =
-      state.seriesGuess.trim().toLowerCase() === current.title.toLowerCase();
+      round.seriesGuess.trim().toLowerCase() === round.question.title.toLowerCase();
 
     const points = charCorrect && seriesCorrect ? 15 : charCorrect || seriesCorrect ? 5 : 0;
 
-    setState((s) => ({
-      ...s,
+    setRound((prev) => ({
+      ...prev,
       characterCorrect: charCorrect,
-      seriesCorrect: seriesCorrect,
+      seriesCorrect,
       revealed: true,
     }));
     setScore((s) => s + points);
     setGamesPlayed((g) => g + 1);
-  }, [state, current]);
+  }, [round]);
 
-  const handleNext = () => {
-    setCurrent(pickRandom(current.id));
-    setState({
-      characterGuess: "",
-      seriesGuess: "",
-      characterCorrect: null,
-      seriesCorrect: null,
-      revealed: false,
-    });
-  };
+  const handleNext = useCallback(() => {
+    setRound((prev) => createRound(prev.question.id));
+  }, []);
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-6">
@@ -106,21 +112,44 @@ export default function CharacterGuesser() {
       {/* Character Image */}
       <Card glow="pink" className="overflow-hidden p-0">
         <div className="relative aspect-square max-h-72 bg-anime-darker flex items-center justify-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={current.characterImageUrl}
-            alt="Guess this character"
-            className="w-full h-full object-cover object-top"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src =
-                "https://via.placeholder.com/400x400/13132a/ff6b9d?text=Character";
-            }}
-          />
+          {!hasValidImage ? (
+            <p className="text-gray-400 text-sm">Image unavailable</p>
+          ) : (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                key={round.question.id}
+                src={imageSrc}
+                alt="Guess this character"
+                className={`w-full h-full object-cover object-top transition-all duration-500 ${
+                  !round.revealed ? "blur-md scale-105" : ""
+                }`}
+                onLoad={() => setImageLoading(false)}
+                onError={(e) => {
+                  setImageLoading(false);
+                  (e.target as HTMLImageElement).src =
+                    "https://via.placeholder.com/400x400/13132a/ff6b9d?text=Character";
+                }}
+              />
+              {imageLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-anime-darker/80">
+                  <p className="text-gray-300 text-sm">Loading image...</p>
+                </div>
+              )}
+            </>
+          )}
+          {!round.revealed && !imageLoading && hasValidImage && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <p className="text-white/70 text-sm font-medium bg-black/50 px-4 py-2 rounded-full">
+                👤 Who is this?
+              </p>
+            </div>
+          )}
         </div>
       </Card>
 
       {/* Inputs */}
-      {!state.revealed ? (
+      {!round.revealed ? (
         <div className="space-y-3">
           <div>
             <label className="flex items-center gap-1.5 text-sm text-gray-400 mb-1.5">
@@ -129,9 +158,9 @@ export default function CharacterGuesser() {
             </label>
             <input
               type="text"
-              value={state.characterGuess}
+              value={round.characterGuess}
               onChange={(e) =>
-                setState((s) => ({ ...s, characterGuess: e.target.value }))
+                setRound((prev) => ({ ...prev, characterGuess: e.target.value }))
               }
               onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
               placeholder="Enter character name..."
@@ -146,9 +175,9 @@ export default function CharacterGuesser() {
             </label>
             <input
               type="text"
-              value={state.seriesGuess}
+              value={round.seriesGuess}
               onChange={(e) =>
-                setState((s) => ({ ...s, seriesGuess: e.target.value }))
+                setRound((prev) => ({ ...prev, seriesGuess: e.target.value }))
               }
               onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
               placeholder="Enter anime series name..."
@@ -158,7 +187,7 @@ export default function CharacterGuesser() {
 
           <button
             onClick={handleSubmit}
-            disabled={!state.characterGuess.trim() && !state.seriesGuess.trim()}
+            disabled={!round.characterGuess.trim() && !round.seriesGuess.trim()}
             className="w-full py-2.5 rounded-lg bg-anime-pink text-white font-semibold hover:bg-anime-pink/80 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Submit Guesses
