@@ -92,7 +92,7 @@ aniguesser-web/
 
 | Technology | Usage |
 |---|---|
-| Next.js 14 (App Router) | Framework + SSR |
+| Next.js 15 (App Router) | Framework + SSR |
 | TypeScript | Type safety |
 | Tailwind CSS | Styling |
 | Framer Motion | Animations & transitions |
