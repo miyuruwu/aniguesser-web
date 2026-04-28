@@ -2,15 +2,51 @@
 
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { RotateCcw, Trophy, ArrowRight, CheckCircle2, XCircle } from "lucide-react";
+import { RotateCcw, Trophy, ArrowRight, CheckCircle2, XCircle, Flag, BookOpen } from "lucide-react";
 import { Anime, GuessResult } from "@/types/anime";
 import { animeData } from "@/data/animeData";
 import AutocompleteInput from "@/components/ui/AutocompleteInput";
 import Badge from "@/components/ui/Badge";
 import Card from "@/components/ui/Card";
 
+const MAX_GUESSES = 10;
+const CLUE_UNLOCK_AT = 5;
+
+/**
+ * Strip common season suffixes so that e.g. "Attack on Titan Season 2"
+ * matches target "Attack on Titan" (season 1).
+ */
+function normalizeTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(
+      /\s+(season\s+\d+|\d+(?:st|nd|rd|th)\s+season|part\s+\d+|cour\s+\d+|ii+|iii|iv|v)\s*$/i,
+      ""
+    )
+    .trim();
+}
+
+/**
+ * Return a deduplicated pool that contains only one entry per normalised title
+ * (the one with the lowest releaseYear, i.e. the first season).
+ */
+function buildFirstSeasonPool(): Anime[] {
+  const seen = new Map<string, Anime>();
+  for (const anime of animeData) {
+    const key = normalizeTitle(anime.title);
+    const existing = seen.get(key);
+    if (!existing || anime.releaseYear < existing.releaseYear) {
+      seen.set(key, anime);
+    }
+  }
+  return Array.from(seen.values());
+}
+
+const firstSeasonPool = buildFirstSeasonPool();
+
 function pickRandomTarget(exclude?: number): Anime {
-  const pool = exclude !== undefined ? animeData.filter((a) => a.id !== exclude) : animeData;
+  const pool =
+    exclude !== undefined ? firstSeasonPool.filter((a) => a.id !== exclude) : firstSeasonPool;
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
@@ -118,12 +154,14 @@ export default function AnimeWordle() {
   const [target, setTarget] = useState<Anime>(() => pickRandomTarget());
   const [guesses, setGuesses] = useState<GuessResult[]>([]);
   const [won, setWon] = useState(false);
+  const [gaveUp, setGaveUp] = useState(false);
   const [inputValue, setInputValue] = useState("");
-  const maxGuesses = 8;
+
+  const cluesUnlocked = guesses.length >= CLUE_UNLOCK_AT;
 
   const handleGuess = useCallback(
     (anime: Anime) => {
-      if (won || guesses.length >= maxGuesses) return;
+      if (won || gaveUp || guesses.length >= MAX_GUESSES) return;
 
       // Prevent duplicate guesses
       if (guesses.some((g) => g.anime.id === anime.id)) {
@@ -136,21 +174,31 @@ export default function AnimeWordle() {
       setGuesses(newGuesses);
       setInputValue("");
 
-      if (anime.id === target.id || anime.title === target.title) {
+      if (
+        anime.id === target.id ||
+        anime.title === target.title ||
+        normalizeTitle(anime.title) === normalizeTitle(target.title)
+      ) {
         setWon(true);
       }
     },
-    [guesses, target, won]
+    [guesses, target, won, gaveUp]
   );
+
+  const handleGiveUp = () => {
+    setGaveUp(true);
+  };
 
   const handleReset = () => {
     setTarget(pickRandomTarget(target.id));
     setGuesses([]);
     setWon(false);
+    setGaveUp(false);
     setInputValue("");
   };
 
-  const failed = !won && guesses.length >= maxGuesses;
+  const failed = !won && (guesses.length >= MAX_GUESSES || gaveUp);
+  const gameOver = won || failed;
 
   return (
     <div className="w-full max-w-3xl mx-auto space-y-6">
@@ -158,13 +206,13 @@ export default function AnimeWordle() {
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold text-white">Anime Wordle</h2>
         <p className="text-gray-400 text-sm">
-          Guess the anime in {maxGuesses} tries. Each guess reveals clues.
+          Guess the anime in {MAX_GUESSES} tries. Each guess reveals clues.
         </p>
         <div className="flex items-center justify-center gap-4 text-sm">
           <span className="text-gray-400">
             Guesses:{" "}
-            <span className={guesses.length >= maxGuesses - 2 ? "text-red-400" : "text-white"}>
-              {guesses.length}/{maxGuesses}
+            <span className={guesses.length >= MAX_GUESSES - 2 ? "text-red-400" : "text-white"}>
+              {guesses.length}/{MAX_GUESSES}
             </span>
           </span>
           <button
@@ -179,7 +227,7 @@ export default function AnimeWordle() {
 
       {/* Win/Lose Banner */}
       <AnimatePresence>
-        {(won || failed) && (
+        {gameOver && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -205,6 +253,14 @@ export default function AnimeWordle() {
                       <p className="text-gray-300">
                         <span className="text-white font-semibold">{target.title}</span> in{" "}
                         {guesses.length} guess{guesses.length !== 1 ? "es" : ""}
+                      </p>
+                    </>
+                  ) : gaveUp ? (
+                    <>
+                      <p className="text-lg font-bold text-orange-400">You gave up!</p>
+                      <p className="text-gray-300">
+                        The answer was{" "}
+                        <span className="text-white font-semibold">{target.title}</span>
                       </p>
                     </>
                   ) : (
@@ -233,8 +289,8 @@ export default function AnimeWordle() {
         )}
       </AnimatePresence>
 
-      {/* Input */}
-      {!won && !failed && (
+      {/* Input + Give Up */}
+      {!gameOver && (
         <div className="flex gap-2">
           <AutocompleteInput
             placeholder="Type an anime name to guess..."
@@ -242,8 +298,39 @@ export default function AnimeWordle() {
             value={inputValue}
             onChange={setInputValue}
           />
+          <button
+            onClick={handleGiveUp}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-anime-card border border-anime-border text-gray-400 hover:text-red-400 hover:border-red-500/50 transition-colors text-sm whitespace-nowrap"
+            title="Give up and reveal the answer"
+          >
+            <Flag className="w-4 h-4" />
+            Give Up
+          </button>
         </div>
       )}
+
+      {/* Clue Card — unlocks at 5 guesses */}
+      <AnimatePresence>
+        {cluesUnlocked && !gameOver && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+          >
+            <Card className="border-anime-accent/50">
+              <div className="flex items-start gap-3">
+                <BookOpen className="w-5 h-5 text-anime-accent flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-anime-accent mb-1">
+                    Clue Unlocked — Synopsis
+                  </p>
+                  <p className="text-sm text-gray-300">{target.synopsis}</p>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Column Headers */}
       {guesses.length > 0 && (
