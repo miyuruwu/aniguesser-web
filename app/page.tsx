@@ -7,18 +7,15 @@ import { GameMode } from "@/types/anime";
 import Navigation from "@/components/Navigation";
 import AnimeWordle from "@/components/modes/AnimeWordle";
 import ScreenshotGuesser from "@/components/modes/ScreenshotGuesser";
-import CharacterGuesser from "@/components/modes/CharacterGuesser";
 
 const modeComponents: Record<GameMode, React.ReactNode> = {
   wordle: <AnimeWordle />,
   screenshot: <ScreenshotGuesser />,
-  character: <CharacterGuesser />,
 };
 
 const modeTitles: Record<GameMode, string> = {
   wordle: "Anime Wordle",
   screenshot: "Screenshot Guesser",
-  character: "Character & Series Guesser",
 };
 
 export default function HomePage() {
