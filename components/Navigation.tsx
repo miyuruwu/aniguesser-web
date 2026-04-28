@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Camera, User, Hash } from "lucide-react";
+import { Camera, Hash } from "lucide-react";
 import { GameMode } from "@/types/anime";
 
 interface NavigationProps {
@@ -16,13 +16,6 @@ const modes: { id: GameMode; label: string; icon: React.ReactNode; description: 
     icon: <Camera className="w-5 h-5" />,
     description: "Identify anime from cover art",
     color: "text-anime-cyan",
-  },
-  {
-    id: "character",
-    label: "Character Guesser",
-    icon: <User className="w-5 h-5" />,
-    description: "Name the character & series",
-    color: "text-anime-pink",
   },
   {
     id: "wordle",
