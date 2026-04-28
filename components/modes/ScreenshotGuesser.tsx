@@ -9,10 +9,14 @@ import AutocompleteInput from "@/components/ui/AutocompleteInput";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 
-// --- Scoring constants (easy to tweak) ---
+// --- Scoring constants ---
+// Base score per correct answer; reduced by POINTS_PER_WRONG for every wrong
+// guess so the player is incentivised to guess early. Choosing to reveal color
+// multiplies the final score by COLOR_MULTIPLIER (a 30% penalty).
 const BASE_POINTS = 100;
 const POINTS_PER_WRONG = 15;
 const COLOR_MULTIPLIER = 0.7;
+// Number of wrong guesses allowed before the image is fully revealed.
 const MAX_ATTEMPTS = 5;
 
 // Blur (px) per attempt count: index = number of wrong guesses so far
@@ -258,7 +262,6 @@ export default function ScreenshotGuesser() {
         <AutocompleteInput
           placeholder="Type anime name..."
           onSelect={handleSelect}
-          disabled={false}
           value={inputValue}
           onChange={setInputValue}
         />
