@@ -3,23 +3,32 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sword, Github } from "lucide-react";
-import { GameMode } from "@/types/anime";
 import Navigation from "@/components/Navigation";
 import AnimeWordle from "@/components/modes/AnimeWordle";
 import ScreenshotGuesser from "@/components/modes/ScreenshotGuesser";
+import MovieWordle from "@/components/modes/MovieWordle";
 
-const modeComponents: Record<GameMode, React.ReactNode> = {
-  wordle: <AnimeWordle />,
-  screenshot: <ScreenshotGuesser />,
-};
+type AppMode = "wordle" | "screenshot" | "movie";
 
-const modeTitles: Record<GameMode, string> = {
+const modeTitles: Record<AppMode, string> = {
   wordle: "Anime Wordle",
   screenshot: "Screenshot Guesser",
+  movie: "Movie Wordle",
 };
 
 export default function HomePage() {
-  const [activeMode, setActiveMode] = useState<GameMode>("wordle");
+  const [activeMode, setActiveMode] = useState<AppMode>("wordle");
+
+  const renderMode = () => {
+    switch (activeMode) {
+      case "wordle":
+        return <AnimeWordle />;
+      case "screenshot":
+        return <ScreenshotGuesser />;
+      case "movie":
+        return <MovieWordle />;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-anime-darker">
@@ -32,7 +41,7 @@ export default function HomePage() {
             </div>
             <div>
               <h1 className="text-base font-bold text-white leading-none">AniGuesser</h1>
-              <p className="text-xs text-gray-500 leading-none">Anime Knowledge Games</p>
+              <p className="text-xs text-gray-500 leading-none">Anime &amp; Movie Knowledge Games</p>
             </div>
           </div>
           <a
@@ -73,7 +82,7 @@ export default function HomePage() {
             exit={{ opacity: 0, y: -16 }}
             transition={{ duration: 0.25 }}
           >
-            {modeComponents[activeMode]}
+            {renderMode()}
           </motion.div>
         </AnimatePresence>
       </main>
