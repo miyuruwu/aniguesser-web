@@ -38,6 +38,34 @@ function normalizeJikanAnime(jikan: JikanAnime): Anime {
   };
 }
 
+/** Derive a normalized base-series title by stripping season/sequel suffixes */
+function getBaseSeriesTitle(title: string): string {
+  return title
+    .replace(/\s+Season\s+\d+\s*$/i, "")
+    .replace(/\s+\d+(?:st|nd|rd|th)\s+Season\s*$/i, "")
+    .replace(/\s+Part\s+\d+\s*$/i, "")
+    .replace(/\s+(?:II|III|IV|V|VI|VII|VIII|IX|X)\s*$/, "")
+    .trim()
+    .toLowerCase();
+}
+
+/** Keep only the earliest-released entry per series to avoid showing duplicate seasons */
+function keepFirstSeasonOnly(items: Anime[]): Anime[] {
+  const map = new Map<string, Anime>();
+  for (const item of items) {
+    const base = getBaseSeriesTitle(item.title);
+    const existing = map.get(base);
+    if (
+      !existing ||
+      (item.releaseYear > 0 &&
+        (existing.releaseYear === 0 || item.releaseYear < existing.releaseYear))
+    ) {
+      map.set(base, item);
+    }
+  }
+  return Array.from(map.values());
+}
+
 /** Search anime by title via Jikan API; falls back to local data on error */
 export async function searchAnimeByTitle(query: string): Promise<Anime[]> {
   if (!query || query.trim().length < 2) return [];
@@ -56,7 +84,7 @@ export async function searchAnimeByTitle(query: string): Promise<Anime[]> {
       return filterLocalAnime(query);
     }
 
-    return json.data.map(normalizeJikanAnime);
+    return keepFirstSeasonOnly(json.data.map(normalizeJikanAnime));
   } catch {
     // Graceful fallback to local data
     return filterLocalAnime(query);

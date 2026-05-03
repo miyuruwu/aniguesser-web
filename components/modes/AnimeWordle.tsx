@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { RotateCcw, Trophy, ArrowRight, CheckCircle2, XCircle } from "lucide-react";
+import { RotateCcw, Trophy, ArrowRight, CheckCircle2, XCircle, Flag } from "lucide-react";
 import { Anime, GuessResult } from "@/types/anime";
 import { animeData } from "@/data/animeData";
 import AutocompleteInput from "@/components/ui/AutocompleteInput";
@@ -118,8 +118,10 @@ export default function AnimeWordle() {
   const [target, setTarget] = useState<Anime>(() => pickRandomTarget());
   const [guesses, setGuesses] = useState<GuessResult[]>([]);
   const [won, setWon] = useState(false);
+  const [gaveUp, setGaveUp] = useState(false);
   const [inputValue, setInputValue] = useState("");
-  const maxGuesses = 8;
+  const maxGuesses = 10;
+  const SYNOPSIS_PREVIEW_LENGTH = 300;
 
   const handleGuess = useCallback(
     (anime: Anime) => {
@@ -147,10 +149,16 @@ export default function AnimeWordle() {
     setTarget(pickRandomTarget(target.id));
     setGuesses([]);
     setWon(false);
+    setGaveUp(false);
     setInputValue("");
   };
 
-  const failed = !won && guesses.length >= maxGuesses;
+  const handleGiveUp = () => {
+    if (won || gaveUp || guesses.length >= maxGuesses) return;
+    setGaveUp(true);
+  };
+
+  const failed = !won && (guesses.length >= maxGuesses || gaveUp);
 
   return (
     <div className="w-full max-w-3xl mx-auto space-y-6">
@@ -158,7 +166,7 @@ export default function AnimeWordle() {
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold text-white">Anime Wordle</h2>
         <p className="text-gray-400 text-sm">
-          Guess the anime in {maxGuesses} tries. Each guess reveals clues.
+          Guess the anime in {maxGuesses} tries. Synopsis clue unlocks after guess 5.
         </p>
         <div className="flex items-center justify-center gap-4 text-sm">
           <span className="text-gray-400">
@@ -207,6 +215,14 @@ export default function AnimeWordle() {
                         {guesses.length} guess{guesses.length !== 1 ? "es" : ""}
                       </p>
                     </>
+                  ) : gaveUp ? (
+                    <>
+                      <p className="text-lg font-bold text-orange-400">You gave up!</p>
+                      <p className="text-gray-300">
+                        The answer was{" "}
+                        <span className="text-white font-semibold">{target.title}</span>
+                      </p>
+                    </>
                   ) : (
                     <>
                       <p className="text-lg font-bold text-red-400">Better luck next time!</p>
@@ -242,7 +258,25 @@ export default function AnimeWordle() {
             value={inputValue}
             onChange={setInputValue}
           />
+          <button
+            onClick={handleGiveUp}
+            aria-label="Give up and reveal answer"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-900/30 border border-red-500/50 text-red-400 hover:bg-red-900/50 hover:text-red-300 transition-colors text-sm whitespace-nowrap"
+          >
+            <Flag className="w-3.5 h-3.5" />
+            Give Up
+          </button>
         </div>
+      )}
+
+      {/* Synopsis Clue — unlocks after 5th guess */}
+      {guesses.length >= 5 && !won && !failed && target.synopsis && (
+        <Card className="border-anime-accent/30 bg-anime-card/50">
+          <p className="text-xs font-semibold text-anime-accent mb-1">📖 Synopsis Clue</p>
+          <p className="text-gray-300 text-sm leading-relaxed">
+            {target.synopsis.slice(0, SYNOPSIS_PREVIEW_LENGTH)}…
+          </p>
+        </Card>
       )}
 
       {/* Column Headers */}
