@@ -47,7 +47,7 @@ export interface JikanAnime {
   year?: number;
 }
 
-export type GameMode = "wordle" | "screenshot";
+export type GameMode = "home" | "wordle" | "screenshot";
 
 export interface GuessResult {
   anime: Anime;

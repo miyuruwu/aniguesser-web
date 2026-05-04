@@ -104,60 +104,39 @@ export default function ScreenshotGuesser() {
   const potentialPoints = calcPoints(wrongGuesses, colorOpened);
 
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-6">
+    <div className="w-full max-w-5xl mx-auto space-y-10">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-white">Screenshot Guesser</h2>
-          <p className="text-gray-400 text-sm">Identify the anime from its cover art</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="text-center">
-            <p className="text-xs text-gray-500">Score</p>
-            <p className="text-xl font-bold text-anime-accent">{totalScore}</p>
-          </div>
-          {streak > 0 && (
-            <div className="text-center">
-              <p className="text-xs text-gray-500">Streak</p>
-              <div className="flex items-center gap-1">
-                <Trophy className="w-4 h-4 text-anime-yellow" />
-                <p className="text-xl font-bold text-anime-yellow">{streak}</p>
-              </div>
-            </div>
-          )}
-        </div>
+      <div className="text-center space-y-8">
+        <h2 className="text-6xl font-nabla tracking-[0.2em] text-white brightness-0 invert uppercase">
+          Screenshot Guess
+        </h2>
+        <p className="text-gray-400 text-sm font-sans tracking-wide">
+          Identify the anime from its cover art
+        </p>
       </div>
 
-      {/* Round status bar */}
-      {!revealed && (
-        <Card className="p-3">
-          <div className="flex items-center justify-center gap-4 text-sm text-gray-400 flex-wrap">
-            <span>
-              Worth:{" "}
-              <span className="text-white font-semibold">{potentialPoints} pts</span>
+      {/* Round status and Score Bar */}
+      <div className="w-full relative flex items-end justify-between px-2 font-sans py-4 pb-2">
+        <div className="flex flex-col items-start">
+          <span className="text-white text-lg font-semibold tracking-wide">
+            Worth: <span className="opacity-100">{potentialPoints}</span>
+          </span>
+        </div>
+
+        <div className="absolute left-1/2 bottom-[-10px] -translate-x-1/2">
+          <div className="flex flex-col items-center">
+            <span className="text-5xl font-nabla brightness-0 invert tracking-widest text-white">
+              SCORE: {totalScore}
             </span>
-            {colorOpened && (
-              <Badge variant="neutral" className="text-anime-yellow border-yellow-500/50">
-                🎨 Color opened (×{COLOR_MULTIPLIER})
-              </Badge>
-            )}
-            <span>
-              {attemptsLeft} attempt{attemptsLeft !== 1 ? "s" : ""} left
-            </span>
-            {/* Attempt dots */}
-            <div className="flex gap-1">
-              {Array.from({ length: MAX_ATTEMPTS }).map((_, i) => (
-                <div
-                  key={i}
-                  className={`w-2 h-2 rounded-full ${
-                    i < wrongGuesses ? "bg-red-400" : "bg-anime-border"
-                  }`}
-                />
-              ))}
-            </div>
           </div>
-        </Card>
-      )}
+        </div>
+
+        <div className="flex flex-col items-end">
+          <span className="text-white text-lg font-semibold tracking-wide">
+            Attempts: {attemptsLeft}
+          </span>
+        </div>
+      </div>
 
       {/* Image Card */}
       <Card glow="cyan" className="overflow-hidden p-0">
@@ -167,9 +146,8 @@ export default function ScreenshotGuesser() {
             src={current.screenshotUrl}
             alt="Guess this anime"
             style={{ filter: revealed ? "none" : imageFilter }}
-            className={`w-full h-full object-cover transition-all duration-500 ${
-              !revealed ? "scale-110" : ""
-            }`}
+            className={`w-full h-full object-cover transition-all duration-500 ${!revealed ? "scale-110" : ""
+              }`}
             onError={(e) => {
               (e.target as HTMLImageElement).src =
                 "https://via.placeholder.com/640x360/13132a/6c63ff?text=Anime+Screenshot";
@@ -191,11 +169,10 @@ export default function ScreenshotGuesser() {
           <button
             onClick={handleOpenColor}
             disabled={colorOpened}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border font-medium transition-colors text-sm ${
-              colorOpened
-                ? "bg-anime-card border-yellow-500/40 text-anime-yellow opacity-60 cursor-not-allowed"
-                : "bg-anime-card border-anime-border text-gray-400 hover:text-anime-yellow hover:border-yellow-500/60"
-            }`}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border font-medium transition-colors text-sm ${colorOpened
+              ? "bg-anime-card border-yellow-500/40 text-anime-yellow opacity-60 cursor-not-allowed"
+              : "bg-anime-card border-anime-border text-gray-400 hover:text-anime-yellow hover:border-yellow-500/60"
+              }`}
           >
             <Palette className="w-4 h-4" />
             {colorOpened ? "Color opened" : `Open color (×${COLOR_MULTIPLIER} pts)`}

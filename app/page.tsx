@@ -2,98 +2,149 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sword, Github } from "lucide-react";
+import Image from "next/image";
 import { GameMode } from "@/types/anime";
-import Navigation from "@/components/Navigation";
 import AnimeWordle from "@/components/modes/AnimeWordle";
 import ScreenshotGuesser from "@/components/modes/ScreenshotGuesser";
 
-const modeComponents: Record<GameMode, React.ReactNode> = {
-  wordle: <AnimeWordle />,
-  screenshot: <ScreenshotGuesser />,
-};
-
-const modeTitles: Record<GameMode, string> = {
-  wordle: "Anime Wordle",
-  screenshot: "Screenshot Guesser",
-};
-
 export default function HomePage() {
-  const [activeMode, setActiveMode] = useState<GameMode>("wordle");
+  const [activeMode, setActiveMode] = useState<GameMode>("home");
 
   return (
-    <div className="min-h-screen bg-anime-darker">
-      {/* Hero Header */}
-      <header className="border-b border-anime-border bg-anime-dark/80 backdrop-blur-md sticky top-0 z-40">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-anime-accent/20 border border-anime-accent/40 flex items-center justify-center">
-              <Sword className="w-4 h-4 text-anime-accent" />
-            </div>
-            <div>
-              <h1 className="text-base font-bold text-white leading-none">AniGuesser</h1>
-              <p className="text-xs text-gray-500 leading-none">Anime Knowledge Games</p>
-            </div>
-          </div>
-          <a
-            href="https://github.com/miyuruwu/aniguesser-web"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-anime-card border border-transparent hover:border-anime-border transition-all"
+    <div className="flex flex-col min-h-screen">
+      {/* Header Navigation */}
+      <header className="w-full z-50 py-8 px-12 flex items-center justify-between relative">
+        <div
+          className="flex items-center gap-2 cursor-pointer z-10"
+          onClick={() => setActiveMode("home")}
+        >
+          <span className="font-nabla text-2xl tracking-wider text-white select-none brightness-0 invert">ANIGUESSER</span>
+        </div>
+
+        <nav className="flex items-center space-x-12 z-10 mx-auto absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <button
+            onClick={() => setActiveMode("home")}
+            className={`relative px-5 py-2 text-sm font-semibold transition-all ${activeMode === 'home' ? 'text-white' : 'text-gray-300 hover:text-white'}`}
           >
-            <Github className="w-4 h-4" />
-          </a>
+            {activeMode === 'home' && (
+              <motion.div layoutId="nav-bg" className="absolute inset-0 bg-white/10 rounded-full" transition={{ type: "spring", duration: 0.5 }} />
+            )}
+            <span className="relative z-10 uppercase tracking-widest text-xs">HOME</span>
+          </button>
+          <button
+            onClick={() => setActiveMode("screenshot")}
+            className={`relative px-5 py-2 text-sm font-semibold transition-all ${activeMode === 'screenshot' ? 'text-white' : 'text-gray-300 hover:text-white'}`}
+          >
+            {activeMode === 'screenshot' && (
+              <motion.div layoutId="nav-line" className="absolute bottom-1 left-5 right-5 h-0.5 bg-white rounded-full" transition={{ type: "spring", duration: 0.5 }} />
+            )}
+            <span className="relative z-10 uppercase tracking-widest text-xs">SCREENSHOT GUESS</span>
+          </button>
+          <button
+            onClick={() => setActiveMode("wordle")}
+            className={`relative px-5 py-2 text-sm font-semibold transition-all ${activeMode === 'wordle' ? 'text-white' : 'text-gray-300 hover:text-white'}`}
+          >
+            {activeMode === 'wordle' && (
+              <motion.div layoutId="nav-line" className="absolute bottom-1 left-5 right-5 h-0.5 bg-white rounded-full" transition={{ type: "spring", duration: 0.5 }} />
+            )}
+            <span className="relative z-10 uppercase tracking-widest text-xs">ANIME WORDLE</span>
+          </button>
+        </nav>
+
+        <div className="z-10">
+          <button className="text-sm font-semibold tracking-wide text-white hover:text-gray-300 transition-colors">
+            Sign In
+          </button>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
-        {/* Navigation */}
-        <Navigation activeMode={activeMode} onModeChange={setActiveMode} />
-
-        {/* Mode Title */}
+      {/* Main Content Area */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-12 relative z-10 flex flex-col justify-center pb-20">
         <AnimatePresence mode="wait">
-          <motion.h2
-            key={activeMode + "-title"}
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            transition={{ duration: 0.2 }}
-            className="text-center text-lg font-semibold text-gray-300"
-          >
-            {modeTitles[activeMode]}
-          </motion.h2>
-        </AnimatePresence>
+          {activeMode === "home" && (
+            <motion.div
+              key="home"
+              initial={{ opacity: 0, filter: "blur(10px)" }}
+              animate={{ opacity: 1, filter: "blur(0px)" }}
+              exit={{ opacity: 0, filter: "blur(10px)" }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+              className="flex-1 flex items-center justify-between relative mt-8"
+            >
+              <div className="w-1/2 space-y-8 z-20">
+                <h1 className="font-nabla text-[4rem] leading-none text-white tracking-widest drop-shadow-[0_0_15px_rgba(255,255,255,0.2)] select-none brightness-0 invert">
+                  ANIGUESSER
+                </h1>
+                <p className="text-gray-300 font-medium text-[15px] leading-relaxed max-w-md mix-blend-lighten">
+                  AniGuesser is a website to test and connect anime
+                  <br />
+                  lovers global. Show the world how big is your love
+                  <br />
+                  for anime &lt;3
+                </p>
+                <div className="flex items-center gap-4 pt-6">
+                  <button
+                    onClick={() => setActiveMode("screenshot")}
+                    className="flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/10 transition-all rounded-full text-white font-semibold text-sm tracking-wide group"
+                  >
+                    Screenshot Guess
+                    <span className="text-gray-400 group-hover:text-white transition-colors">&rsaquo;</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveMode("wordle")}
+                    className="flex items-center gap-2 px-6 py-3 hover:text-gray-300 transition-all text-white font-semibold text-sm tracking-wide group"
+                  >
+                    Anime Wordle
+                    <span className="text-gray-400 group-hover:text-gray-300 transition-colors">&rsaquo;</span>
+                  </button>
+                </div>
+              </div>
 
-        {/* Game Mode Content */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeMode}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
-            transition={{ duration: 0.25 }}
-          >
-            {modeComponents[activeMode]}
-          </motion.div>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, x: 20 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.95, x: 20 }}
+                transition={{ duration: 0.7, delay: 0.1, ease: "easeOut" }}
+                className="w-1/2 flex justify-center items-center h-full pointer-events-none z-10"
+              >
+                <Image
+                  src="/images/Rimuru_Full_Art.webp"
+                  alt="Rimuru Tempest"
+                  width={800}
+                  height={800}
+                  className="object-contain w-full h-auto drop-shadow-[0_0_50px_rgba(0,180,255,0.25)] scale-125 translate-y-[-1%]"
+                  priority
+                />
+              </motion.div>
+            </motion.div>
+          )}
+
+          {activeMode === "wordle" && (
+            <motion.div
+              key="wordle-game"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+              className="w-full max-w-5xl mx-auto mt-24"
+            >
+              <AnimeWordle />
+            </motion.div>
+          )}
+
+          {activeMode === "screenshot" && (
+            <motion.div
+              key="screenshot-game"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+              className="w-full max-w-5xl mx-auto mt-24"
+            >
+              <ScreenshotGuesser />
+            </motion.div>
+          )}
         </AnimatePresence>
       </main>
-
-      {/* Footer */}
-      <footer className="mt-12 pb-6 text-center text-gray-600 text-xs">
-        <p>
-          Powered by{" "}
-          <a
-            href="https://jikan.moe"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-anime-accent hover:underline"
-          >
-            Jikan API
-          </a>{" "}
-          (Unofficial MyAnimeList API)
-        </p>
-        <p className="mt-0.5">AniGuesser – Built with Next.js, Tailwind CSS &amp; Framer Motion</p>
-      </footer>
     </div>
   );
 }

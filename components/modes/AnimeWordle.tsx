@@ -117,6 +117,7 @@ function ResultRow({ result, target }: { result: GuessResult; target: Anime }) {
 export default function AnimeWordle() {
   const [target, setTarget] = useState<Anime>(() => pickRandomTarget());
   const [guesses, setGuesses] = useState<GuessResult[]>([]);
+  const [totalScore, setTotalScore] = useState(0);
   const [won, setWon] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const maxGuesses = 8;
@@ -138,6 +139,7 @@ export default function AnimeWordle() {
 
       if (anime.id === target.id || anime.title === target.title) {
         setWon(true);
+        setTotalScore(s => s + (maxGuesses - guesses.length) * 10);
       }
     },
     [guesses, target, won]
@@ -153,25 +155,40 @@ export default function AnimeWordle() {
   const failed = !won && guesses.length >= maxGuesses;
 
   return (
-    <div className="w-full max-w-3xl mx-auto space-y-6">
+    <div className="w-full max-w-5xl mx-auto space-y-12">
       {/* Header */}
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-white">Anime Wordle</h2>
-        <p className="text-gray-400 text-sm">
+      <div className="text-center space-y-8">
+        <h2 className="text-6xl font-nabla tracking-[0.2em] text-white brightness-0 invert uppercase">
+          Anime Wordle
+        </h2>
+        <p className="text-gray-400 text-sm font-sans tracking-wide">
           Guess the anime in {maxGuesses} tries. Each guess reveals clues.
         </p>
-        <div className="flex items-center justify-center gap-4 text-sm">
-          <span className="text-gray-400">
-            Guesses:{" "}
-            <span className={guesses.length >= maxGuesses - 2 ? "text-red-400" : "text-white"}>
+      </div>
+
+      {/* Stats Bar */}
+      <div className="w-full relative flex items-end justify-between px-2 font-sans py-4 pb-2 border-white/10">
+        <div className="flex flex-col items-start">
+          <span className="text-white text-lg font-semibold tracking-wide">
+            Guesses: <span className={guesses.length >= maxGuesses - 2 ? "text-red-400" : "text-white"}>
               {guesses.length}/{maxGuesses}
             </span>
           </span>
+        </div>
+        
+        <div className="absolute left-1/2 bottom-[-10px] -translate-x-1/2">
+           <div className="flex flex-col items-center">
+              <span className="text-5xl font-nabla brightness-0 invert tracking-widest text-white">
+                SCORE: {totalScore}
+              </span>
+           </div>
+        </div>
+
+        <div className="flex flex-col items-end">
           <button
             onClick={handleReset}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-anime-card border border-anime-border text-gray-400 hover:text-white hover:border-anime-accent transition-colors text-sm"
+            className="text-white text-lg font-semibold tracking-wide hover:text-gray-300 transition-colors"
           >
-            <RotateCcw className="w-3.5 h-3.5" />
             New Game
           </button>
         </div>
