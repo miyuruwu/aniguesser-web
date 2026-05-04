@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   RotateCcw, Trophy, Film, Search, CheckCircle2,
-  XCircle, ChevronUp, ChevronDown, Share2, Flame,
+  XCircle, ChevronUp, ChevronDown, Share2, PlayCircle, HelpCircle
 } from "lucide-react";
 import { Movie, MovieGuessResult } from "@/types/movie";
 import { movieData } from "@/data/movieData";
@@ -14,16 +14,111 @@ import Card from "@/components/ui/Card";
 const MAX_GUESSES = 8;
 const STATS_KEY = "movie-wordle-stats";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-interface Stats {
+interface MovieStats {
+  gamesPlayed: number;
   wins: number;
-  losses: number;
-  streak: number;
+  currentStreak: number;
   bestStreak: number;
+  bestScore: number; // fewest guesses to win; 0 means no win yet
 }
 
-// ─── Pure helpers ─────────────────────────────────────────────────────────────
+const DEFAULT_STATS: MovieStats = {
+  gamesPlayed: 0,
+  wins: 0,
+  currentStreak: 0,
+  bestStreak: 0,
+  bestScore: 0,
+};
+
+function useMovieStats() {
+  const [stats, setStats] = useState<MovieStats>(() => {
+    if (typeof window === "undefined") return DEFAULT_STATS;
+    try {
+      const raw = localStorage.getItem(STATS_KEY);
+      return raw ? (JSON.parse(raw) as MovieStats) : DEFAULT_STATS;
+    } catch {
+      return DEFAULT_STATS;
+    }
+  });
+
+  const updateStats = useCallback((outcome: "win" | "lose", guessCount?: number) => {
+    setStats((prev) => {
+      const next: MovieStats = {
+        gamesPlayed: prev.gamesPlayed + 1,
+        wins: outcome === "win" ? prev.wins + 1 : prev.wins,
+        currentStreak: outcome === "win" ? prev.currentStreak + 1 : 0,
+        bestStreak:
+          outcome === "win"
+            ? Math.max(prev.bestStreak, prev.currentStreak + 1)
+            : prev.bestStreak,
+        bestScore:
+          outcome === "win" && guessCount !== undefined
+            ? prev.bestScore === 0
+              ? guessCount
+              : Math.min(prev.bestScore, guessCount)
+            : prev.bestScore,
+      };
+      if (typeof window !== "undefined") {
+        try { localStorage.setItem(STATS_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+      }
+      return next;
+    });
+  }, []);
+
+  return { stats, updateStats };
+}
+
+function useSound() {
+  const ctxRef = useRef<AudioContext | null>(null);
+
+  function getCtx(): AudioContext {
+    if (!ctxRef.current) {
+      ctxRef.current = new (window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    }
+    return ctxRef.current;
+  }
+
+  function playTone(
+    frequency: number,
+    duration: number,
+    type: OscillatorType = "sine",
+    gainValue = 0.3
+  ) {
+    try {
+      const ctx = getCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = type;
+      osc.frequency.setValueAtTime(frequency, ctx.currentTime);
+      gain.gain.setValueAtTime(gainValue, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + duration);
+    } catch { /* ignore AudioContext errors */ }
+  }
+
+  const playGuess = useCallback(() => {
+    playTone(440, 0.1, "sine", 0.2);
+  }, []);
+
+  const playWin = useCallback(() => {
+    // Ascending arpeggio: C5 E5 G5 C6
+    [523, 659, 784, 1047].forEach((freq, i) => {
+      setTimeout(() => playTone(freq, 0.25, "sine", 0.25), i * 120);
+    });
+  }, []);
+
+  const playLose = useCallback(() => {
+    // Descending two notes
+    playTone(300, 0.3, "square", 0.2);
+    setTimeout(() => playTone(200, 0.4, "square", 0.2), 250);
+  }, []);
+
+  return { playGuess, playWin, playLose };
+}
 
 function pickRandom(exclude?: number): Movie {
   const pool = exclude !== undefined ? movieData.filter((m) => m.id !== exclude) : movieData;
@@ -47,63 +142,113 @@ function compareMovies(guess: Movie, target: Movie): MovieGuessResult {
 
 function normalise(s: string): string { return s.trim().toLowerCase(); }
 
-function loadStats(): Stats {
-  if (typeof window === "undefined") return { wins: 0, losses: 0, streak: 0, bestStreak: 0 };
-  try {
-    const raw = localStorage.getItem(STATS_KEY);
-    return raw ? JSON.parse(raw) : { wins: 0, losses: 0, streak: 0, bestStreak: 0 };
-  } catch { return { wins: 0, losses: 0, streak: 0, bestStreak: 0 }; }
-}
-
-function saveStats(s: Stats): void {
-  try { localStorage.setItem(STATS_KEY, JSON.stringify(s)); } catch { /* ignore */ }
-}
-
-/** Build Wordle-style emoji grid for sharing */
-function buildShareText(guesses: MovieGuessResult[], won: boolean, target: Movie): string {
+function buildShareText(
+  guesses: MovieGuessResult[],
+  won: boolean,
+  maxGuesses: number
+): string {
+  const header = `🎬 AniGuesser Movie Wordle ${won ? guesses.length : "X"}/${maxGuesses}`;
   const rows = guesses.map((g) => {
-    const y = g.yearResult === "Correct" ? "🟩" : "🟨";
-    const r = g.ratingResult === "Correct" ? "🟩" : "🟨";
-    const genres = g.matchingGenres.length > 0 ? "🟩" : "⬛";
-    const d = g.directorResult === "Correct" ? "🟩" : "⬛";
-    return `${y}${r}${genres}${d}`;
+    const yearEmoji =
+      g.yearResult === "Correct" ? "🟩" : g.yearResult === "Earlier" ? "🔼" : "🔽";
+    const ratingEmoji =
+      g.ratingResult === "Correct" ? "🟩" : g.ratingResult === "Higher" ? "🔼" : "🔽";
+    const genreEmoji = g.matchingGenres.length > 0 ? "🟩" : "⬜";
+    const dirEmoji = g.directorResult === "Correct" ? "🟩" : "⬜";
+    return `${yearEmoji}${ratingEmoji}${genreEmoji}${dirEmoji}`;
   });
-  const score = won ? `${guesses.length}/${MAX_GUESSES}` : "X/8";
-  return `🎬 Movie Wordle — ${score}\n\n${rows.join("\n")}\n\n#MovieWordle`;
+  return [header, ...rows].join("\n");
 }
 
-// ─── Confetti particle ────────────────────────────────────────────────────────
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  rotation: number;
+  rotationSpeed: number;
+  color: string;
+  width: number;
+  height: number;
+}
 
-function ConfettiBlast() {
-  const colors = ["#00ff88", "#6c63ff", "#ff6b9d", "#ffd700", "#00d4ff"];
-  const particles = useMemo(
-    () => Array.from({ length: 28 }, (_, i) => ({
-      id: i,
-      color: colors[i % colors.length],
-      x: Math.random() * 100,
-      delay: Math.random() * 0.5,
-      dur: 1.2 + Math.random() * 0.8,
-    })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
+const CONFETTI_COLORS = ["#6c63ff", "#ff6b9d", "#00ff88", "#ffd700", "#00d4ff"];
+
+function ConfettiOverlay() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Create particles
+    const particles: Particle[] = Array.from({ length: 120 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height * 0.4 - canvas.height * 0.1,
+      vx: (Math.random() - 0.5) * 4,
+      vy: Math.random() * 3 + 2,
+      rotation: Math.random() * 360,
+      rotationSpeed: (Math.random() - 0.5) * 8,
+      color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+      width: Math.random() * 8 + 4,
+      height: Math.random() * 5 + 3,
+    }));
+
+    let startTime: number | null = null;
+    const DURATION = 2500; // ms
+    let rafId: number;
+
+    function draw(timestamp: number) {
+      if (!ctx || !canvas) return;
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(elapsed / DURATION, 1);
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Global fade out in final 500ms
+      ctx.globalAlpha = progress > 0.8 ? 1 - (progress - 0.8) / 0.2 : 1;
+
+      for (const p of particles) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.07; // gravity
+        p.rotation += p.rotationSpeed;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.width / 2, -p.height / 2, p.width, p.height);
+        ctx.restore();
+      }
+
+      ctx.globalAlpha = 1;
+
+      if (progress < 1) {
+        rafId = requestAnimationFrame(draw);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    rafId = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(rafId);
+  }, []);
+
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl" aria-hidden>
-      {particles.map((p) => (
-        <motion.div
-          key={p.id}
-          className="absolute w-2 h-2 rounded-full"
-          style={{ left: `${p.x}%`, top: "0%", backgroundColor: p.color }}
-          initial={{ y: 0, opacity: 1, scale: 1 }}
-          animate={{ y: 180, opacity: 0, scale: 0.4, rotate: 360 * (p.id % 2 === 0 ? 1 : -1) }}
-          transition={{ duration: p.dur, delay: p.delay, ease: "easeIn" }}
-        />
-      ))}
-    </div>
+    <canvas
+      ref={canvasRef}
+      className="fixed inset-0 z-[200] pointer-events-none"
+      aria-hidden="true"
+    />
   );
 }
-
-// ─── ResultRow ────────────────────────────────────────────────────────────────
 
 function ResultRow({ result, index }: { result: MovieGuessResult; index: number }) {
   const yearVariant = result.yearResult === "Correct" ? "correct" : result.yearResult === "Earlier" ? "earlier" : "later";
@@ -114,26 +259,25 @@ function ResultRow({ result, index }: { result: MovieGuessResult; index: number 
       initial={{ opacity: 0, x: -24 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
-      className="grid grid-cols-[auto_1fr_auto_auto_1fr_auto] gap-2 items-center p-2.5 rounded-lg bg-anime-card border border-anime-border"
+      className="grid grid-cols-[auto_minmax(0,1.5fr)_auto_auto_minmax(0,2fr)_auto] gap-2 items-center p-3 rounded-lg bg-anime-card border border-anime-border"
     >
-      {/* Poster thumbnail */}
-      <div className="w-8 h-12 rounded-md overflow-hidden flex-shrink-0 border border-anime-border/60">
+      <div className="shrink-0 w-10 h-14 rounded-lg overflow-hidden border border-anime-border bg-anime-card hidden sm:block">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={result.movie.posterUrl}
           alt={result.movie.title}
           className="w-full h-full object-cover"
-          onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/32x48/13132a/6c63ff?text=🎬"; }}
+          loading="lazy"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.style.display = "none";
+          }}
         />
       </div>
-
-      {/* Title + Director */}
       <div className="min-w-0">
         <p className="text-sm font-semibold text-white truncate">{result.movie.title}</p>
         <p className="text-xs text-gray-400 truncate">{result.movie.director}</p>
       </div>
-
-      {/* Year */}
       <div className="text-center">
         <p className="text-xs text-gray-500 mb-0.5">Year</p>
         <Badge variant={yearVariant}>
@@ -142,8 +286,6 @@ function ResultRow({ result, index }: { result: MovieGuessResult; index: number 
           : <><ChevronDown className="w-3 h-3" />{result.movie.releaseYear}</>}
         </Badge>
       </div>
-
-      {/* IMDb */}
       <div className="text-center">
         <p className="text-xs text-gray-500 mb-0.5">IMDb</p>
         <Badge variant={ratingVariant}>
@@ -152,8 +294,6 @@ function ResultRow({ result, index }: { result: MovieGuessResult; index: number 
           : `↓ ${result.movie.rating}`}
         </Badge>
       </div>
-
-      {/* Genres */}
       <div>
         <p className="text-xs text-gray-500 mb-0.5">Genres</p>
         <div className="flex flex-wrap gap-1">
@@ -162,8 +302,6 @@ function ResultRow({ result, index }: { result: MovieGuessResult; index: number 
           ))}
         </div>
       </div>
-
-      {/* Director match */}
       <div className="text-center">
         <p className="text-xs text-gray-500 mb-0.5">Dir.</p>
         <Badge variant={result.directorResult === "Correct" ? "correct" : "incorrect"}>
@@ -175,8 +313,6 @@ function ResultRow({ result, index }: { result: MovieGuessResult; index: number 
     </motion.div>
   );
 }
-
-// ─── PosterReveal ─────────────────────────────────────────────────────────────
 
 function PosterReveal({ movie, won }: { movie: Movie; won: boolean }) {
   return (
@@ -216,13 +352,22 @@ function PosterReveal({ movie, won }: { movie: Movie; won: boolean }) {
           <p><span className="text-gray-500">Year:</span> {movie.releaseYear}</p>
           <p><span className="text-gray-500">IMDb:</span> <span className="text-anime-yellow font-semibold">⭐ {movie.rating}</span></p>
         </div>
-        <p className="text-xs text-gray-400 mt-2 line-clamp-3">{movie.synopsis}</p>
+        <p className="text-xs text-gray-500 leading-relaxed line-clamp-3 mt-2">{movie.synopsis}</p>
+        {movie.watchUrl && (
+          <a
+            href={movie.watchUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-anime-pink/15 hover:bg-anime-pink/25 border border-anime-pink/40 text-anime-pink text-xs font-semibold transition-colors"
+          >
+            <PlayCircle className="w-3.5 h-3.5" />
+            Watch Now
+          </a>
+        )}
       </div>
     </motion.div>
   );
 }
-
-// ─── MovieAutocompleteInput ───────────────────────────────────────────────────
 
 interface MovieAutocompleteInputProps {
   onSelect: (movie: Movie) => void;
@@ -235,7 +380,6 @@ function MovieAutocompleteInput({ onSelect, disabled, guessedIds }: MovieAutocom
   const [open, setOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
-  const listRef = useRef<HTMLUListElement>(null);
 
   const filtered = useMemo(() => {
     if (query.trim().length < 1) return [];
@@ -244,7 +388,6 @@ function MovieAutocompleteInput({ onSelect, disabled, guessedIds }: MovieAutocom
     );
   }, [query, guessedIds]);
 
-  // Reset active index when filtered list changes
   useEffect(() => { setActiveIdx(-1); }, [filtered]);
 
   const handleSelect = (movie: Movie) => {
@@ -271,7 +414,7 @@ function MovieAutocompleteInput({ onSelect, disabled, guessedIds }: MovieAutocom
   };
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative w-full">
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
         <input
@@ -281,21 +424,14 @@ function MovieAutocompleteInput({ onSelect, disabled, guessedIds }: MovieAutocom
           onFocus={() => setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
           onKeyDown={handleKeyDown}
-          placeholder="Search for a movie... (↑↓ to navigate, Enter to select)"
+          placeholder="Search for a movie..."
           disabled={disabled}
           className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-anime-card border border-anime-border text-white placeholder-gray-600 focus:outline-none focus:border-anime-pink/60 transition-colors disabled:opacity-50"
         />
-        {query && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-600">
-            {filtered.length} result{filtered.length !== 1 ? "s" : ""}
-          </span>
-        )}
       </div>
-
       <AnimatePresence>
         {open && filtered.length > 0 && (
           <motion.ul
-            ref={listRef}
             initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.15 }}
             className="absolute z-50 mt-1 w-full max-h-64 overflow-y-auto rounded-xl bg-anime-card border border-anime-border shadow-xl"
@@ -306,27 +442,24 @@ function MovieAutocompleteInput({ onSelect, disabled, guessedIds }: MovieAutocom
                   type="button"
                   onMouseDown={() => handleSelect(movie)}
                   onMouseEnter={() => setActiveIdx(idx)}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors ${
-                    idx === activeIdx ? "bg-anime-pink/20 border-l-2 border-anime-pink" : "hover:bg-anime-border/40"
+                  className={`w-full flex items-start gap-3 px-3 py-2 text-left transition-colors ${
+                    idx === activeIdx ? "bg-anime-pink/20" : "hover:bg-anime-border/40"
                   }`}
                 >
-                  {/* Mini poster */}
-                  <div className="w-7 h-10 rounded overflow-hidden flex-shrink-0 bg-anime-border/40">
+                  <div className="shrink-0 w-8 h-12 rounded overflow-hidden border border-anime-border bg-anime-card flex-shrink-0">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={movie.posterUrl} alt={movie.title}
+                      src={movie.posterUrl}
+                      alt={movie.title}
                       className="w-full h-full object-cover"
-                      onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/28x40/13132a/6c63ff?text=🎬"; }}
+                      loading="lazy"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
                     />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white truncate font-medium">{movie.title}</p>
-                    <p className="text-xs text-gray-500 truncate">{movie.director}</p>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-xs text-gray-500">{movie.releaseYear}</p>
-                    <p className="text-xs text-anime-yellow">⭐ {movie.rating}</p>
-                  </div>
+                  <span className="text-white truncate font-medium pt-1 flex-1">{movie.title}</span>
+                  <span className="ml-auto text-xs text-gray-600 flex-shrink-0 pl-2 pt-1">{movie.releaseYear}</span>
                 </button>
               </li>
             ))}
@@ -337,50 +470,20 @@ function MovieAutocompleteInput({ onSelect, disabled, guessedIds }: MovieAutocom
   );
 }
 
-// ─── StatsBar ─────────────────────────────────────────────────────────────────
-
-function StatsBar({ stats }: { stats: Stats }) {
-  const total = stats.wins + stats.losses;
-  const winPct = total > 0 ? Math.round((stats.wins / total) * 100) : 0;
-  return (
-    <div className="flex items-center gap-3 text-xs text-gray-500 flex-wrap">
-      <div className="flex items-center gap-1">
-        <Trophy className="w-3 h-3 text-anime-yellow" />
-        <span className="text-white font-semibold">{stats.wins}</span> wins
-      </div>
-      <div className="text-gray-700">·</div>
-      <div>{winPct}% win rate</div>
-      {stats.streak > 0 && (
-        <>
-          <div className="text-gray-700">·</div>
-          <div className="flex items-center gap-1">
-            <Flame className="w-3 h-3 text-orange-400" />
-            <span className="text-orange-400 font-semibold">{stats.streak}</span> streak
-          </div>
-        </>
-      )}
-      {stats.bestStreak > 1 && (
-        <>
-          <div className="text-gray-700">·</div>
-          <div>Best: <span className="text-white font-semibold">{stats.bestStreak}</span></div>
-        </>
-      )}
-    </div>
-  );
-}
-
-// ─── Main: MovieWordle ────────────────────────────────────────────────────────
-
 export default function MovieWordle() {
   const [target, setTarget] = useState<Movie>(() => pickRandom());
   const [guesses, setGuesses] = useState<MovieGuessResult[]>([]);
   const [gameOver, setGameOver] = useState(false);
   const [won, setWon] = useState(false);
-  const [stats, setStats] = useState<Stats>({ wins: 0, losses: 0, streak: 0, bestStreak: 0 });
   const [copied, setCopied] = useState(false);
+  const [showTaglineHint, setShowTaglineHint] = useState(false);
 
-  // Load stats from localStorage on mount
-  useEffect(() => { setStats(loadStats()); }, []);
+  const { stats, updateStats } = useMovieStats();
+  const { playGuess, playWin, playLose } = useSound();
+
+  useEffect(() => {
+    if (gameOver) setShowTaglineHint(false);
+  }, [gameOver]);
 
   const guessedIds = useMemo(() => new Set(guesses.map((g) => g.movie.id)), [guesses]);
   const remaining = MAX_GUESSES - guesses.length;
@@ -391,30 +494,21 @@ export default function MovieWordle() {
       const result = compareMovies(movie, target);
       const newGuesses = [...guesses, result];
       setGuesses(newGuesses);
+      
+      playGuess();
 
       if (normalise(movie.title) === normalise(target.title)) {
         setWon(true);
         setGameOver(true);
-        setStats((prev) => {
-          const next: Stats = {
-            wins: prev.wins + 1,
-            losses: prev.losses,
-            streak: prev.streak + 1,
-            bestStreak: Math.max(prev.bestStreak, prev.streak + 1),
-          };
-          saveStats(next);
-          return next;
-        });
+        updateStats("win", newGuesses.length);
+        playWin();
       } else if (newGuesses.length >= MAX_GUESSES) {
         setGameOver(true);
-        setStats((prev) => {
-          const next: Stats = { wins: prev.wins, losses: prev.losses + 1, streak: 0, bestStreak: prev.bestStreak };
-          saveStats(next);
-          return next;
-        });
+        updateStats("lose");
+        playLose();
       }
     },
-    [guesses, target, gameOver, guessedIds]
+    [guesses, target, gameOver, guessedIds, updateStats, playGuess, playWin, playLose]
   );
 
   const reset = () => {
@@ -423,21 +517,32 @@ export default function MovieWordle() {
     setGameOver(false);
     setWon(false);
     setCopied(false);
+    setShowTaglineHint(false);
   };
 
-  const handleShare = async () => {
-    const text = buildShareText(guesses, won, target);
+  const handleShare = useCallback(async () => {
+    const text = buildShareText(guesses, won, MAX_GUESSES);
     try {
       await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    } catch { /* ignore */ }
-  };
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [guesses, won]);
 
   return (
-    <div className="space-y-4">
-
-      {/* 1. Header Card */}
+    <div className="w-full max-w-3xl mx-auto space-y-4">
+      {won && gameOver && <ConfettiOverlay key={guesses.length} />}
+      
       <Card glow="none">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -451,8 +556,6 @@ export default function MovieWordle() {
               </p>
             </div>
           </div>
-
-          {/* Pip dots */}
           <div className="flex items-center gap-1">
             {Array.from({ length: MAX_GUESSES }).map((_, i) => {
               const guessed = i < guesses.length;
@@ -465,17 +568,7 @@ export default function MovieWordle() {
               return <span key={i} className={cls} />;
             })}
           </div>
-
           <div className="flex items-center gap-1 flex-shrink-0">
-            {gameOver && (
-              <button
-                onClick={handleShare}
-                title="Share result"
-                className="p-2 rounded-lg text-gray-400 hover:text-anime-green hover:bg-anime-card border border-transparent hover:border-anime-border transition-all"
-              >
-                {copied ? <CheckCircle2 className="w-4 h-4 text-anime-green" /> : <Share2 className="w-4 h-4" />}
-              </button>
-            )}
             <button
               onClick={reset}
               className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-anime-card border border-transparent hover:border-anime-border transition-all"
@@ -485,14 +578,24 @@ export default function MovieWordle() {
             </button>
           </div>
         </div>
-
-        {/* Stats bar */}
-        <div className="mt-2 pt-2 border-t border-anime-border/40">
-          <StatsBar stats={stats} />
-        </div>
       </Card>
 
-      {/* 2. Hint legend */}
+      {/* Stats Bar */}
+      <div className="grid grid-cols-5 gap-2">
+        {[
+          { label: "Played", value: stats.gamesPlayed },
+          { label: "Wins", value: stats.wins },
+          { label: "Streak", value: stats.currentStreak },
+          { label: "Best Streak", value: stats.bestStreak },
+          { label: "Best Score", value: stats.bestScore === 0 ? "—" : `${stats.bestScore} guess${stats.bestScore !== 1 ? "es" : ""}` },
+        ].map(({ label, value }) => (
+          <div key={label} className="flex flex-col items-center p-2 rounded-xl bg-anime-card border border-anime-border">
+            <span className="text-lg font-bold text-white">{value}</span>
+            <span className="text-[10px] uppercase tracking-wide text-gray-500 mt-0.5 text-center">{label}</span>
+          </div>
+        ))}
+      </div>
+
       <div className="flex flex-wrap gap-1.5 text-xs text-gray-500 items-center">
         <span>Hints:</span>
         <Badge variant="correct">✓ Correct</Badge>
@@ -503,12 +606,54 @@ export default function MovieWordle() {
         <Badge variant="match">Genre Match</Badge>
       </div>
 
-      {/* 3. Input */}
       {!gameOver && (
-        <MovieAutocompleteInput onSelect={handleGuess} disabled={gameOver} guessedIds={guessedIds} />
+        <div className="flex items-start gap-2">
+          {/* Search input — takes all available space */}
+          <div className="flex-1">
+            <MovieAutocompleteInput
+              onSelect={handleGuess}
+              disabled={gameOver}
+              guessedIds={guessedIds}
+            />
+          </div>
+
+          {/* Hint icon with tagline tooltip */}
+          <div className="relative flex-shrink-0 mt-0.5">
+            <button
+              onMouseEnter={() => setShowTaglineHint(true)}
+              onMouseLeave={() => setShowTaglineHint(false)}
+              onFocus={() => setShowTaglineHint(true)}
+              onBlur={() => setShowTaglineHint(false)}
+              className="w-10 h-10 flex items-center justify-center rounded-xl bg-anime-card border border-anime-border text-gray-500 hover:text-anime-pink hover:border-anime-pink/40 transition-colors"
+              aria-label="Show tagline hint"
+              type="button"
+            >
+              <HelpCircle className="w-4 h-4" />
+            </button>
+
+            {/* Tooltip */}
+            <AnimatePresence>
+              {showTaglineHint && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 6, scale: 0.95 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 top-full mt-2 w-56 p-3 rounded-xl bg-anime-dark border border-anime-border shadow-2xl z-50"
+                >
+                  <p className="text-[10px] uppercase tracking-wide text-gray-600 mb-1 font-medium">
+                    Tagline Hint
+                  </p>
+                  <p className="text-xs italic text-gray-300 leading-relaxed">
+                    &ldquo;{target.tagline}&rdquo;
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
       )}
 
-      {/* 4. Win/Lose banner */}
       <AnimatePresence>
         {gameOver && (
           <motion.div
@@ -518,7 +663,6 @@ export default function MovieWordle() {
               won ? "bg-anime-green/10 border-anime-green/40" : "bg-red-500/10 border-red-500/40"
             }`}
           >
-            {won && <ConfettiBlast />}
             <p className={`text-lg font-bold mb-3 ${won ? "text-anime-green" : "text-red-400"}`}>
               {won
                 ? `🎉 Correct in ${guesses.length} guess${guesses.length !== 1 ? "es" : ""}!`
@@ -527,32 +671,44 @@ export default function MovieWordle() {
 
             <PosterReveal movie={target} won={won} />
 
-            <div className="mt-4 flex gap-2">
-              <button
-                onClick={handleShare}
-                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border font-medium transition-colors ${
-                  copied
-                    ? "bg-anime-green/20 border-anime-green/40 text-anime-green"
-                    : "bg-anime-card border-anime-border text-gray-300 hover:text-white hover:border-anime-pink/50"
-                }`}
-              >
-                {copied ? <><CheckCircle2 className="w-4 h-4" /> Copied!</> : <><Share2 className="w-4 h-4" /> Share</>}
-              </button>
-              <button
-                onClick={reset}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-anime-accent text-white hover:bg-anime-accent/80 transition-colors font-medium"
-              >
-                <RotateCcw className="w-4 h-4" /> Play Again
-              </button>
-            </div>
+            <button
+              onClick={reset}
+              className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-anime-pink/15 hover:bg-anime-pink/25 border border-anime-pink/40 text-anime-pink font-semibold transition-colors"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Play Again
+            </button>
+            
+            {/* Share button */}
+            <button
+              onClick={handleShare}
+              className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-anime-card hover:bg-anime-border border border-anime-border text-gray-300 text-sm font-semibold transition-colors"
+            >
+              <Share2 className="w-4 h-4" />
+              Share Result
+            </button>
+
+            {/* Copied toast */}
+            <AnimatePresence>
+              {copied && (
+                <motion.p
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.2 }}
+                  className="text-center text-xs text-anime-green mt-1.5 font-medium"
+                >
+                  ✓ Copied to clipboard!
+                </motion.p>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* 5. Column headers */}
       {guesses.length > 0 && (
-        <div className="grid grid-cols-[auto_1fr_auto_auto_1fr_auto] gap-2 px-2.5 text-xs text-gray-500 font-medium">
-          <span className="w-8" />
+        <div className="grid grid-cols-[auto_minmax(0,1.5fr)_auto_auto_minmax(0,2fr)_auto] gap-2 px-3 text-xs text-gray-500 font-medium">
+          <span className="hidden sm:block w-10"></span>
           <span>Title / Director</span>
           <span className="text-center">Year</span>
           <span className="text-center">IMDb</span>
@@ -561,7 +717,6 @@ export default function MovieWordle() {
         </div>
       )}
 
-      {/* 6. Guess rows */}
       <div className="space-y-2">
         <AnimatePresence initial={false}>
           {guesses.map((result, i) => (
@@ -570,12 +725,11 @@ export default function MovieWordle() {
         </AnimatePresence>
       </div>
 
-      {/* 7. Empty state */}
       {guesses.length === 0 && !gameOver && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10 text-gray-600">
           <Film className="w-10 h-10 mx-auto mb-3 opacity-40" />
           <p className="text-sm">Search and select a movie to make your first guess!</p>
-          <p className="text-xs mt-1">You have {MAX_GUESSES} attempts. Use ↑↓ keys to navigate suggestions.</p>
+          <p className="text-xs mt-1">You have {MAX_GUESSES} attempts.</p>
         </motion.div>
       )}
 
