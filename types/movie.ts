@@ -8,6 +8,7 @@ export interface Movie {
   posterUrl: string;    // direct image URL (HTTPS)
   synopsis: string;     // 1-2 sentence plot summary
   tagline: string;      // official movie tagline
+  watchUrl?: string;    // JustWatch or IMDb URL to watch/find the movie
 }
 
 export interface MovieGuessResult {
