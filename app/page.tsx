@@ -3,16 +3,39 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { Trophy, LogOut, User } from "lucide-react";
 import { GameMode } from "@/types/anime";
 import AnimeWordle from "@/components/modes/AnimeWordle";
 import ScreenshotGuesser from "@/components/modes/ScreenshotGuesser";
 import MovieWordle from "@/components/modes/MovieWordle";
+import Leaderboard from "@/components/Leaderboard";
+import AuthModal from "@/components/ui/AuthModal";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function HomePage() {
   const [activeMode, setActiveMode] = useState<GameMode>("home");
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const { user, login, register, logout } = useAuth();
 
   return (
     <div className="flex flex-col min-h-screen">
+      {/* Auth Modal */}
+      <AnimatePresence>
+        {showAuthModal && (
+          <AuthModal
+            onSignIn={(username) => {
+              const result = login(username);
+              return result;
+            }}
+            onSignUp={(username) => {
+              const result = register(username);
+              return result;
+            }}
+            onClose={() => setShowAuthModal(false)}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Header Navigation */}
       <header className="w-full z-50 py-8 px-12 flex items-center justify-between relative">
         <div
@@ -59,12 +82,43 @@ export default function HomePage() {
             )}
             <span className="relative z-10 uppercase tracking-widest text-xs">MOVIE WORDLE</span>
           </button>
+          <button
+            onClick={() => setActiveMode("leaderboard")}
+            className={`relative px-5 py-2 text-sm font-semibold transition-all ${activeMode === 'leaderboard' ? 'text-white' : 'text-gray-300 hover:text-white'}`}
+          >
+            {activeMode === 'leaderboard' && (
+              <motion.div layoutId="nav-line" className="absolute bottom-1 left-5 right-5 h-0.5 bg-white rounded-full" transition={{ type: "spring", duration: 0.5 }} />
+            )}
+            <span className="relative z-10 uppercase tracking-widest text-xs flex items-center gap-1">
+              <Trophy className="w-3 h-3" />
+              LEADERBOARD
+            </span>
+          </button>
         </nav>
 
-        <div className="z-10">
-          <button className="text-sm font-semibold tracking-wide text-white hover:text-gray-300 transition-colors">
-            Sign In
-          </button>
+        <div className="z-10 flex items-center gap-2">
+          {user ? (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 text-sm text-gray-300">
+                <User className="w-3.5 h-3.5 text-anime-accent" />
+                <span className="font-medium text-white">{user.username}</span>
+              </div>
+              <button
+                onClick={logout}
+                className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-red-400 transition-colors"
+                title="Sign Out"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="text-sm font-semibold tracking-wide text-white hover:text-gray-300 transition-colors"
+            >
+              Sign In
+            </button>
+          )}
         </div>
       </header>
 
@@ -164,6 +218,19 @@ export default function HomePage() {
               className="w-full max-w-5xl mx-auto mt-24"
             >
               <MovieWordle />
+            </motion.div>
+          )}
+
+          {activeMode === "leaderboard" && (
+            <motion.div
+              key="leaderboard"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+              className="w-full max-w-3xl mx-auto mt-24"
+            >
+              <Leaderboard />
             </motion.div>
           )}
         </AnimatePresence>

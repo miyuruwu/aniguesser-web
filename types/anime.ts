@@ -47,7 +47,7 @@ export interface JikanAnime {
   year?: number;
 }
 
-export type GameMode = "home" | "wordle" | "screenshot" | "movie";
+export type GameMode = "home" | "wordle" | "screenshot" | "movie" | "leaderboard";
 
 export interface GuessResult {
   anime: Anime;
@@ -55,4 +55,17 @@ export interface GuessResult {
   ratingResult: "Higher" | "Lower" | "Correct";
   matchingGenres: string[];
   studioResult: "Correct" | "Incorrect";
+}
+
+export interface User {
+  id: string;
+  username: string;
+  createdAt: number;
+}
+
+export interface GameScoreEntry {
+  userId: string;
+  username: string;
+  score: number;
+  timestamp: number;
 }

@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, CheckCircle2, XCircle, Trophy, Palette, Flag } from "lucide-react";
+import { ChevronRight, CheckCircle2, XCircle, Trophy, Palette, Flag, BookOpen } from "lucide-react";
 import { Anime } from "@/types/anime";
 import { animeData } from "@/data/animeData";
 import AutocompleteInput from "@/components/ui/AutocompleteInput";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
+import { useAuth } from "@/hooks/useAuth";
+import { submitScore } from "@/lib/leaderboard";
 
 // --- Scoring constants ---
 // Base score per correct answer; reduced by POINTS_PER_WRONG for every wrong
@@ -43,9 +45,16 @@ export default function ScreenshotGuesser() {
   const [gaveUp, setGaveUp] = useState(false);
   const [earnedPoints, setEarnedPoints] = useState<number | null>(null);
   const [inputValue, setInputValue] = useState("");
+  const scoreSubmittedRef = useRef(false);
+
+  const { user } = useAuth();
 
   const blurPx = BLUR_STEPS[Math.min(wrongGuesses, BLUR_STEPS.length - 1)];
   const imageFilter = `blur(${blurPx}px)${colorOpened ? "" : " grayscale(100%)"}`;
+
+  // Synopsis hint appears when player is struggling (3+ wrong guesses) and game is still active
+  const SYNOPSIS_HINT_THRESHOLD = 3;
+  const showSynopsisHint = !revealed && wrongGuesses >= SYNOPSIS_HINT_THRESHOLD && !!current.synopsis;
 
   const handleSelect = useCallback(
     (anime: Anime) => {
@@ -98,7 +107,16 @@ export default function ScreenshotGuesser() {
     setGaveUp(false);
     setEarnedPoints(null);
     setInputValue("");
+    scoreSubmittedRef.current = false;
   };
+
+  // Save score once when a round ends with a positive cumulative score
+  useEffect(() => {
+    if (revealed && user && totalScore > 0 && !scoreSubmittedRef.current) {
+      scoreSubmittedRef.current = true;
+      submitScore("screenshot", user.id, user.username, totalScore);
+    }
+  }, [revealed, user, totalScore]);
 
   const attemptsLeft = MAX_ATTEMPTS - wrongGuesses;
   const potentialPoints = calcPoints(wrongGuesses, colorOpened);
@@ -187,6 +205,27 @@ export default function ScreenshotGuesser() {
           </button>
         </div>
       )}
+
+      {/* Synopsis hint after 3 wrong guesses */}
+      <AnimatePresence>
+        {showSynopsisHint && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+          >
+            <Card className="border-anime-yellow/30 bg-anime-yellow/5">
+              <div className="flex items-start gap-3">
+                <BookOpen className="w-4 h-4 text-anime-yellow flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-semibold text-anime-yellow mb-1">Synopsis Hint</p>
+                  <p className="text-xs text-gray-300 leading-relaxed">{current.synopsis}</p>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Feedback Banner */}
       <AnimatePresence>

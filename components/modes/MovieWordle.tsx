@@ -4,12 +4,14 @@ import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   RotateCcw, Trophy, Film, Search, CheckCircle2,
-  XCircle, ChevronUp, ChevronDown, Share2, PlayCircle, HelpCircle
+  XCircle, ChevronUp, ChevronDown, Share2, PlayCircle, HelpCircle, Flag, BookOpen
 } from "lucide-react";
 import { Movie, MovieGuessResult } from "@/types/movie";
 import { movieData } from "@/data/movieData";
 import Badge from "@/components/ui/Badge";
 import Card from "@/components/ui/Card";
+import { useAuth } from "@/hooks/useAuth";
+import { submitScore } from "@/lib/leaderboard";
 
 const MAX_GUESSES = 8;
 const STATS_KEY = "movie-wordle-stats";
@@ -476,11 +478,16 @@ export default function MovieWordle() {
   const [totalScore, setTotalScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [won, setWon] = useState(false);
+  const [gaveUp, setGaveUp] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showTaglineHint, setShowTaglineHint] = useState(false);
+  const scoreSubmittedRef = useRef(false);
 
   const { stats, updateStats } = useMovieStats();
   const { playGuess, playWin, playLose } = useSound();
+  const { user } = useAuth();
+
+  const SYNOPSIS_HINT_THRESHOLD = 5;
 
   useEffect(() => {
     if (gameOver) setShowTaglineHint(false);
@@ -488,6 +495,9 @@ export default function MovieWordle() {
 
   const guessedIds = useMemo(() => new Set(guesses.map((g) => g.movie.id)), [guesses]);
   const remaining = MAX_GUESSES - guesses.length;
+
+  // Show synopsis hint after 5 wrong guesses and game still active
+  const showSynopsisHint = !gameOver && guesses.length >= SYNOPSIS_HINT_THRESHOLD && !!target.synopsis;
 
   const handleGuess = useCallback(
     (movie: Movie) => {
@@ -513,14 +523,32 @@ export default function MovieWordle() {
     [guesses, target, gameOver, guessedIds, updateStats, playGuess, playWin, playLose]
   );
 
+  const handleGiveUp = () => {
+    if (gameOver) return;
+    setGaveUp(true);
+    setGameOver(true);
+    updateStats("lose");
+    playLose();
+  };
+
   const reset = () => {
     setTarget(pickRandom(target.id));
     setGuesses([]);
     setGameOver(false);
     setWon(false);
+    setGaveUp(false);
     setCopied(false);
     setShowTaglineHint(false);
+    scoreSubmittedRef.current = false;
   };
+
+  // Save score to leaderboard once when game ends with a positive score
+  useEffect(() => {
+    if (gameOver && user && totalScore > 0 && !scoreSubmittedRef.current) {
+      scoreSubmittedRef.current = true;
+      submitScore("movie", user.id, user.username, totalScore);
+    }
+  }, [gameOver, user, totalScore]);
 
   const handleShare = useCallback(async () => {
     const text = buildShareText(guesses, won, MAX_GUESSES);
@@ -641,6 +669,38 @@ export default function MovieWordle() {
         </div>
       )}
 
+      {/* Synopsis hint after 5 wrong guesses */}
+      <AnimatePresence>
+        {showSynopsisHint && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+          >
+            <Card className="border-anime-yellow/30 bg-anime-yellow/5">
+              <div className="flex items-start gap-3">
+                <BookOpen className="w-4 h-4 text-anime-yellow flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-semibold text-anime-yellow mb-1">Synopsis Hint</p>
+                  <p className="text-xs text-gray-300 leading-relaxed">{target.synopsis}</p>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Give Up button */}
+      {!gameOver && (
+        <button
+          onClick={handleGiveUp}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-anime-card border border-red-500/40 text-red-400 hover:bg-red-500/10 hover:border-red-500/70 transition-colors font-medium text-sm"
+        >
+          <Flag className="w-4 h-4" />
+          Give Up
+        </button>
+      )}
+
       <AnimatePresence>
         {gameOver && (
           <motion.div
@@ -653,6 +713,8 @@ export default function MovieWordle() {
             <p className={`text-lg font-bold mb-3 ${won ? "text-anime-green" : "text-red-400"}`}>
               {won
                 ? `🎉 Correct in ${guesses.length} guess${guesses.length !== 1 ? "es" : ""}!`
+                : gaveUp
+                ? `🏳️ You gave up! The answer was \u201c${target.title}\u201d`
                 : `😞 The answer was \u201c${target.title}\u201d`}
             </p>
 

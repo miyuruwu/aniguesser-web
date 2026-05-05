@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { RotateCcw, Trophy, ArrowRight, CheckCircle2, XCircle } from "lucide-react";
+import { Trophy, ArrowRight, CheckCircle2, XCircle, Flag, BookOpen } from "lucide-react";
 import { Anime, GuessResult } from "@/types/anime";
 import { animeData } from "@/data/animeData";
 import AutocompleteInput from "@/components/ui/AutocompleteInput";
 import Badge from "@/components/ui/Badge";
 import Card from "@/components/ui/Card";
+import { useAuth } from "@/hooks/useAuth";
+import { submitScore } from "@/lib/leaderboard";
 
 function pickRandomTarget(exclude?: number): Anime {
   const pool = exclude !== undefined ? animeData.filter((a) => a.id !== exclude) : animeData;
@@ -119,12 +121,21 @@ export default function AnimeWordle() {
   const [guesses, setGuesses] = useState<GuessResult[]>([]);
   const [totalScore, setTotalScore] = useState(0);
   const [won, setWon] = useState(false);
+  const [gaveUp, setGaveUp] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const maxGuesses = 8;
+  const SYNOPSIS_HINT_THRESHOLD = 5;
+  const scoreSubmittedRef = useRef(false);
+
+  const { user } = useAuth();
+
+  // Count wrong guesses (all guesses are wrong until you guess correctly)
+  const wrongGuesses = guesses.length;
+  const showSynopsisHint = !won && !gaveUp && wrongGuesses >= SYNOPSIS_HINT_THRESHOLD && !!target.synopsis;
 
   const handleGuess = useCallback(
     (anime: Anime) => {
-      if (won || guesses.length >= maxGuesses) return;
+      if (won || gaveUp || guesses.length >= maxGuesses) return;
 
       // Prevent duplicate guesses
       if (guesses.some((g) => g.anime.id === anime.id)) {
@@ -142,17 +153,33 @@ export default function AnimeWordle() {
         setTotalScore(s => s + (maxGuesses - guesses.length) * 10);
       }
     },
-    [guesses, target, won]
+    [guesses, target, won, gaveUp]
   );
+
+  const handleGiveUp = () => {
+    if (won || gaveUp || guesses.length >= maxGuesses) return;
+    setGaveUp(true);
+  };
 
   const handleReset = () => {
     setTarget(pickRandomTarget(target.id));
     setGuesses([]);
     setWon(false);
+    setGaveUp(false);
     setInputValue("");
+    scoreSubmittedRef.current = false;
   };
 
-  const failed = !won && guesses.length >= maxGuesses;
+  // Save score when game ends (win/lose/give up) — submit only once per round
+  useEffect(() => {
+    const gameEnded = won || gaveUp || guesses.length >= maxGuesses;
+    if (gameEnded && user && totalScore > 0 && !scoreSubmittedRef.current) {
+      scoreSubmittedRef.current = true;
+      submitScore("wordle", user.id, user.username, totalScore);
+    }
+  }, [won, gaveUp, guesses.length, user, totalScore]);
+
+  const failed = !won && !gaveUp && guesses.length >= maxGuesses;
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-12">
@@ -194,9 +221,9 @@ export default function AnimeWordle() {
         </div>
       </div>
 
-      {/* Win/Lose Banner */}
+      {/* Win/Lose/Give Up Banner */}
       <AnimatePresence>
-        {(won || failed) && (
+        {(won || failed || gaveUp) && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -222,6 +249,14 @@ export default function AnimeWordle() {
                       <p className="text-gray-300">
                         <span className="text-white font-semibold">{target.title}</span> in{" "}
                         {guesses.length} guess{guesses.length !== 1 ? "es" : ""}
+                      </p>
+                    </>
+                  ) : gaveUp ? (
+                    <>
+                      <p className="text-lg font-bold text-red-400">You gave up!</p>
+                      <p className="text-gray-300">
+                        The answer was{" "}
+                        <span className="text-white font-semibold">{target.title}</span>
                       </p>
                     </>
                   ) : (
@@ -250,8 +285,29 @@ export default function AnimeWordle() {
         )}
       </AnimatePresence>
 
-      {/* Input */}
-      {!won && !failed && (
+      {/* Synopsis hint after 5 wrong guesses */}
+      <AnimatePresence>
+        {showSynopsisHint && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+          >
+            <Card className="border-anime-yellow/30 bg-anime-yellow/5">
+              <div className="flex items-start gap-3">
+                <BookOpen className="w-4 h-4 text-anime-yellow flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-semibold text-anime-yellow mb-1">Synopsis Hint</p>
+                  <p className="text-xs text-gray-300 leading-relaxed">{target.synopsis}</p>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Input + Give Up */}
+      {!won && !failed && !gaveUp && (
         <div className="flex gap-2">
           <AutocompleteInput
             placeholder="Type an anime name to guess..."
@@ -259,6 +315,14 @@ export default function AnimeWordle() {
             value={inputValue}
             onChange={setInputValue}
           />
+          <button
+            onClick={handleGiveUp}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-anime-card border border-red-500/40 text-red-400 hover:bg-red-500/10 hover:border-red-500/70 transition-colors font-medium text-sm flex-shrink-0"
+            title="Give up and reveal the answer"
+          >
+            <Flag className="w-4 h-4" />
+            <span className="hidden sm:inline">Give Up</span>
+          </button>
         </div>
       )}
 
