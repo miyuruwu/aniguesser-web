@@ -19,9 +19,9 @@ module.exports = {
         "anime-yellow": "#ffd700",
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
-        bangers: ["var(--font-bangers)", "cursive"],
-        nabla: ["var(--font-nabla)", "cursive"],
+        sans: ["system-ui", "sans-serif"],
+        bangers: ["Impact", "Haettenschweiler", "cursive"],
+        nabla: ["Georgia", "serif"],
       },
     },
   },
