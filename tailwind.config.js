@@ -20,6 +20,8 @@ module.exports = {
       },
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        bangers: ["var(--font-bangers)", "cursive"],
+        nabla: ["var(--font-nabla)", "cursive"],
       },
     },
   },

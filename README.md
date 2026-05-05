@@ -5,14 +5,11 @@ A modern, dark-themed anime guessing game built with **Next.js 14**, **Tailwind 
 ## 🎯 Game Modes
 
 ### 1. Anime Wordle
-Guess the target anime in up to 10 tries. Each guess reveals comparison clues:
+Guess the target anime in up to 8 tries. Each guess reveals comparison clues:
 - **Release Year** — `Earlier`, `Later`, or `Correct`
 - **Rating/Score** — `Higher`, `Lower`, or `Correct`
 - **Genres** — matching genres are highlighted in green
 - **Studio** — `Correct` or `Incorrect`
-- **Synopsis** — unlocks as a hint after your 5th guess
-
-Use the **Give Up** button to end the round early and reveal the answer.
 
 ### 2. Screenshot Guesser
 Identify an anime from its cover art. Type or search the anime title with autocomplete suggestions.

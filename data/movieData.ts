@@ -11,6 +11,7 @@ export const movieData: Movie[] = [
     posterUrl: "https://m.media-amazon.com/images/M/MV5BNDE3ODcxYzMtY2YzZC00NmNlLWJiNDMtZDViZWM2MzIxZDYwXkEyXkFqcGdeQXVyNjAwNDUxODI@._V1_SX300.jpg",
     synopsis: "Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency. Andy Dufresne, a banker wrongly convicted of murder, navigates life inside Shawshank State Penitentiary.",
     tagline: "Fear can hold you prisoner. Hope can set you free.",
+    watchUrl: "https://www.imdb.com/title/tt0111161/",
   },
   {
     id: 2,
@@ -22,6 +23,7 @@ export const movieData: Movie[] = [
     posterUrl: "https://m.media-amazon.com/images/M/MV5BM2MyNjYxNmUtYTAwNi00MTYxLWJmNWYtYzZlODY3ZTk3OTFlXkEyXkFqcGdeQXVyNzkwMjQ5NzM@._V1_SX300.jpg",
     synopsis: "The aging patriarch of an organized crime dynasty transfers control of his clandestine empire to his reluctant son. A sweeping epic of family, power, and loyalty.",
     tagline: "An offer you can't refuse.",
+    watchUrl: "https://www.imdb.com/title/tt0068646/",
   },
   {
     id: 3,
@@ -33,6 +35,7 @@ export const movieData: Movie[] = [
     posterUrl: "https://m.media-amazon.com/images/M/MV5BMTMxNTMwODM0NF5BMl5BanBnXkFtZTcwODAyMTk2Mw@@._V1_SX300.jpg",
     synopsis: "When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological and physical tests of his ability to fight injustice.",
     tagline: "Why so serious?",
+    watchUrl: "https://www.imdb.com/title/tt0468569/",
   },
   {
     id: 4,
@@ -44,6 +47,7 @@ export const movieData: Movie[] = [
     posterUrl: "https://m.media-amazon.com/images/M/MV5BNGNhMDIzZTUtNTBlZi00MTRlLWFjM2ItYzViMjE3YzI5MjljXkEyXkFqcGdeQXVyNzkwMjQ5NzM@._V1_SX300.jpg",
     synopsis: "The lives of two mob hitmen, a boxer, a gangster and his wife, and a pair of diner bandits intertwine in four tales of violence and redemption in Los Angeles.",
     tagline: "You won't know the facts until you've seen the fiction.",
+    watchUrl: "https://www.imdb.com/title/tt0110912/",
   },
   {
     id: 5,
@@ -55,6 +59,7 @@ export const movieData: Movie[] = [
     posterUrl: "https://m.media-amazon.com/images/M/MV5BOTY4YjI2N2MtYmFlMC00ZjcyLTk3ODMtMmViOTBmN2MxZjBlXkEyXkFqcGdeQXVyNzkwMjQ5NzM@._V1_SX300.jpg",
     synopsis: "In German-occupied Poland during World War II, industrialist Oskar Schindler gradually becomes concerned for his Jewish workforce after witnessing their persecution by the Nazis.",
     tagline: "Whoever saves one life, saves the world entire.",
+    watchUrl: "https://www.imdb.com/title/tt0108052/",
   },
   {
     id: 6,
@@ -66,6 +71,7 @@ export const movieData: Movie[] = [
     posterUrl: "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg",
     synopsis: "A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.",
     tagline: "Your mind is the scene of the crime.",
+    watchUrl: "https://www.imdb.com/title/tt1375666/",
   },
   {
     id: 7,
@@ -77,6 +83,7 @@ export const movieData: Movie[] = [
     posterUrl: "https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVlLTM5YTUtZmFhZTgzNjczOGJhXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_SX300.jpg",
     synopsis: "When a beautiful stranger leads computer hacker Neo to a forbidding underworld, he discovers the shocking truth -- the life he knows is the elaborate deception of an evil cyber-intelligence.",
     tagline: "Free your mind.",
+    watchUrl: "https://www.imdb.com/title/tt0133093/",
   },
   {
     id: 8,
@@ -88,6 +95,7 @@ export const movieData: Movie[] = [
     posterUrl: "https://m.media-amazon.com/images/M/MV5BY2NkZjEzMDgtN2RjYy00YzM1LWI4ZmQtMjIwYjFjNmI3ZGEwXkEyXkFqcGdeQXVyNzkwMjQ5NzM@._V1_SX300.jpg",
     synopsis: "The story of Henry Hill and his life in the mob, covering his relationship with his wife Karen Hill and his mob partners Jimmy Conway and Tommy DeVito in the Italian-American mob.",
     tagline: "Three Decades of Life in the Mafia.",
+    watchUrl: "https://www.imdb.com/title/tt0099685/",
   },
   {
     id: 9,
@@ -99,6 +107,7 @@ export const movieData: Movie[] = [
     posterUrl: "https://m.media-amazon.com/images/M/MV5BNDIzNDU0YzEtYzE5Ni00ZjlkLTk5ZjgtNjM3NWE4YzA3Nzk3XkEyXkFqcGdeQXVyMjUzOTY1NTc@._V1_SX300.jpg",
     synopsis: "An insomniac office worker and a devil-may-care soapmaker form an underground fight club that evolves into something much, much more.",
     tagline: "Mischief. Mayhem. Soap.",
+    watchUrl: "https://www.imdb.com/title/tt0137523/",
   },
   {
     id: 10,
@@ -110,6 +119,7 @@ export const movieData: Movie[] = [
     posterUrl: "https://m.media-amazon.com/images/M/MV5BNWIwODRlZTUtY2U3ZS00Yzg1LWJhNzYtMmZiYmEyNmU1NjMzXkEyXkFqcGdeQXVyMTQxNzMzNDI@._V1_SX300.jpg",
     synopsis: "The presidencies of Kennedy and Johnson, the Vietnam War, the Watergate scandal and other historical events unfold from the perspective of an Alabama man with an IQ of 75.",
     tagline: "Life is like a box of chocolates... you never know what you're gonna get.",
+    watchUrl: "https://www.imdb.com/title/tt0109830/",
   },
   {
     id: 11,
@@ -121,6 +131,7 @@ export const movieData: Movie[] = [
     posterUrl: "https://m.media-amazon.com/images/M/MV5BNjNhZTk0ZmEtNjJhMi00YzFlLWE1MmEtYzM1M2ZmMGMwMTU4XkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_SX300.jpg",
     synopsis: "A young F.B.I. cadet must receive the help of an incarcerated and manipulative cannibal killer to help catch another serial killer, a madman who skins his victims.",
     tagline: "To enter the mind of a killer she must challenge the mind of a madman.",
+    watchUrl: "https://www.imdb.com/title/tt0102926/",
   },
   {
     id: 12,
@@ -132,6 +143,7 @@ export const movieData: Movie[] = [
     posterUrl: "https://m.media-amazon.com/images/M/MV5BZjdkOTU3MDktN2IxOS00OGEyLWFmMjktY2FiMmZkNWIyODZiXkEyXkFqcGdeQXVyMTMxODk2OTU@._V1_SX300.jpg",
     synopsis: "A team of explorers travel through a wormhole in space in an attempt to ensure humanity's survival. Cooper, a former pilot, must leave his family behind to save the world.",
     tagline: "Mankind was born on Earth. It was never meant to die here.",
+    watchUrl: "https://www.imdb.com/title/tt0816692/",
   },
   {
     id: 13,
@@ -143,6 +155,7 @@ export const movieData: Movie[] = [
     posterUrl: "https://m.media-amazon.com/images/M/MV5BOTA5NDZlZGUtMjAxOS00YTRkLTkwYmMtYWQ0NWEwZDZiNjEzXkEyXkFqcGdeQXVyMTMxODk2OTU@._V1_SX300.jpg",
     synopsis: "A promising young drummer enrolls at a cut-throat music conservatory where his dreams of greatness are mentored by an instructor who will stop at nothing to realize a student's potential.",
     tagline: "The road to greatness can take you to the edge.",
+    watchUrl: "https://www.imdb.com/title/tt2582802/",
   },
   {
     id: 14,
@@ -154,6 +167,7 @@ export const movieData: Movie[] = [
     posterUrl: "https://m.media-amazon.com/images/M/MV5BMzUzNDM2NzM2MV5BMl5BanBnXkFtZTgwNTM3NTg4OTE@._V1_SX300.jpg",
     synopsis: "While navigating their careers in Los Angeles, a pianist and an actress fall in love while attempting to reconcile their aspirations for the future.",
     tagline: "Here's to the fools who dream.",
+    watchUrl: "https://www.imdb.com/title/tt3783958/",
   },
   {
     id: 15,
@@ -165,6 +179,7 @@ export const movieData: Movie[] = [
     posterUrl: "https://m.media-amazon.com/images/M/MV5BYWZjMjk3ZTItODQ2ZC00NTY5LWE0ZDYtZTI3MjcwN2Q5NTVkXkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_SX300.jpg",
     synopsis: "Greed and class discrimination threaten the newly formed symbiotic relationship between the wealthy Park family and the destitute Kim clan.",
     tagline: "Act like you own the place.",
+    watchUrl: "https://www.imdb.com/title/tt6751668/",
   },
   {
     id: 16,
@@ -176,6 +191,7 @@ export const movieData: Movie[] = [
     posterUrl: "https://m.media-amazon.com/images/M/MV5BMTc5MDE2ODcwNV5BMl5BanBnXkFtZTgwMzI2NzQ2NzM@._V1_SX300.jpg",
     synopsis: "After the devastating events of Infinity War, the universe is in ruins. With the help of remaining allies, the Avengers assemble once more in order to reverse Thanos' actions and restore balance to the universe.",
     tagline: "Whatever it takes.",
+    watchUrl: "https://www.imdb.com/title/tt4154796/",
   },
   {
     id: 17,
@@ -187,6 +203,7 @@ export const movieData: Movie[] = [
     posterUrl: "https://m.media-amazon.com/images/M/MV5BNGVjNWI4ZGUtNzE0MS00YTJmLWE0ZDctN2ZiYTk2YmI3NTYyXkEyXkFqcGdeQXVyMTkxNjUyNQ@@._V1_SX300.jpg",
     synopsis: "In Gotham City, mentally troubled comedian Arthur Fleck is disregarded and mistreated by society. He then embarks on a downward spiral of revolution and bloody crime.",
     tagline: "Put on a happy face.",
+    watchUrl: "https://www.imdb.com/title/tt7286456/",
   },
   {
     id: 18,
@@ -198,6 +215,7 @@ export const movieData: Movie[] = [
     posterUrl: "https://m.media-amazon.com/images/M/MV5BOTdmNTFjNDEtNzg0My00ZjkxLTg1ZDAtZTdkMDc2ZmFiNWQ1XkEyXkFqcGdeQXVyNTAzNzgwNTg@._V1_SX300.jpg",
     synopsis: "April 6th, 1917. As a regiment assembles to wage war deep in enemy territory, two soldiers are assigned to race against time and deliver a message that will stop 1,600 men from walking straight into a deadly trap.",
     tagline: "Time is the enemy.",
+    watchUrl: "https://www.imdb.com/title/tt8579674/",
   },
   {
     id: 19,
@@ -209,6 +227,7 @@ export const movieData: Movie[] = [
     posterUrl: "https://m.media-amazon.com/images/M/MV5BMDBmYTZjNjUtN2M1MS00MTQ2LTk2ODgtNzc2M2QyZGE5NTVjXkEyXkFqcGdeQXVyNzAwMjU2MTY@._V1_SX300.jpg",
     synopsis: "The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb during World War II.",
     tagline: "The world forever changes.",
+    watchUrl: "https://www.imdb.com/title/tt15398776/",
   },
   {
     id: 20,
@@ -220,6 +239,7 @@ export const movieData: Movie[] = [
     posterUrl: "https://m.media-amazon.com/images/M/MV5BN2FjNmEyNWMtYzM0ZS00NjIyLTg5YzYtYThlMGVjNzE1OGViXkEyXkFqcGdeQXVyMTkxNjUyNQ@@._V1_SX300.jpg",
     synopsis: "A noble family becomes embroiled in a war for control over the galaxy's most valuable asset while its heir becomes troubled by visions of a dark future.",
     tagline: "Beyond fear, destiny awaits.",
+    watchUrl: "https://www.imdb.com/title/tt1160419/",
   },
   {
     id: 21,
@@ -231,6 +251,7 @@ export const movieData: Movie[] = [
     posterUrl: "https://m.media-amazon.com/images/M/MV5BNzA1Njg4NzYxOV5BMl5BanBnXkFtZTgwODk5NjU3MzI@._V1_SX300.jpg",
     synopsis: "Young Blade Runner K's discovery of a long-buried secret leads him to track down former Blade Runner Rick Deckard, who's been missing for thirty years.",
     tagline: "The key to the future is finally unearthed.",
+    watchUrl: "https://www.imdb.com/title/tt1856101/",
   },
   {
     id: 22,
@@ -242,6 +263,7 @@ export const movieData: Movie[] = [
     posterUrl: "https://m.media-amazon.com/images/M/MV5BMTExMzU0ODcxNDheQTJeQWpwZ15BbWU4MDE1OTI4MzAy._V1_SX300.jpg",
     synopsis: "A linguist works with the military to communicate with alien lifeforms after twelve mysterious spacecraft appear around the world.",
     tagline: "Why are they here?",
+    watchUrl: "https://www.imdb.com/title/tt2543164/",
   },
   {
     id: 23,
@@ -253,6 +275,7 @@ export const movieData: Movie[] = [
     posterUrl: "https://m.media-amazon.com/images/M/MV5BYTdiOTIyZTQtNmQ1OS00NjZlLWIyMTgtYzk5Y2M3ZDVmMDk1XkEyXkFqcGdeQXVyMTAzMDg4NzU0._V1_SX300.jpg",
     synopsis: "An aging Chinese immigrant is swept up in an insane adventure, where she alone can save what's important to her by connecting with the lives she could have led in other universes.",
     tagline: "The battle for the multiverse.",
+    watchUrl: "https://www.imdb.com/title/tt6710474/",
   },
   {
     id: 24,
@@ -264,6 +287,7 @@ export const movieData: Movie[] = [
     posterUrl: "https://m.media-amazon.com/images/M/MV5BMzM5NjUxOTEyMl5BMl5BanBnXkFtZTgwNjEyMDM0MDE@._V1_SX300.jpg",
     synopsis: "A writer encounters the owner of an aging high-class hotel, who tells him of his early years serving as a lobby boy in the hotel's glorious years under an enigmatic concierge.",
     tagline: "Grand adventures rarely travel alone.",
+    watchUrl: "https://www.imdb.com/title/tt2278388/",
   },
   {
     id: 25,
@@ -275,5 +299,6 @@ export const movieData: Movie[] = [
     posterUrl: "https://m.media-amazon.com/images/M/MV5BMjA5Njk3MjM4OV5BMl5BanBnXkFtZTcwMTc5MTE1MQ@@._V1_SX300.jpg",
     synopsis: "Violence and mayhem ensue after a hunter stumbles upon a drug deal gone wrong and more than two million dollars in cash near the Rio Grande.",
     tagline: "There are no clean getaways.",
+    watchUrl: "https://www.imdb.com/title/tt0477348/",
   },
 ];

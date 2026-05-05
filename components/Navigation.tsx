@@ -1,16 +1,15 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Camera, Hash, Film } from "lucide-react";
-
-type AppMode = "wordle" | "screenshot" | "movie";
+import { Camera, Hash } from "lucide-react";
+import { GameMode } from "@/types/anime";
 
 interface NavigationProps {
-  activeMode: AppMode;
-  onModeChange: (mode: AppMode) => void;
+  activeMode: GameMode;
+  onModeChange: (mode: GameMode) => void;
 }
 
-const modes: { id: AppMode; label: string; icon: React.ReactNode; description: string; color: string }[] = [
+const modes: { id: GameMode; label: string; icon: React.ReactNode; description: string; color: string }[] = [
   {
     id: "screenshot",
     label: "Screenshot Guesser",
@@ -24,13 +23,6 @@ const modes: { id: AppMode; label: string; icon: React.ReactNode; description: s
     icon: <Hash className="w-5 h-5" />,
     description: "Guess anime with clues",
     color: "text-anime-accent",
-  },
-  {
-    id: "movie",
-    label: "Movie Wordle",
-    icon: <Film className="w-5 h-5" />,
-    description: "Guess movies with clues",
-    color: "text-anime-pink",
   },
 ];
 
