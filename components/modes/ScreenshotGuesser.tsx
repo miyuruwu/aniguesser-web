@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, CheckCircle2, XCircle, Trophy, Palette, Flag, BookOpen } from "lucide-react";
 import { Anime } from "@/types/anime";
@@ -45,6 +45,7 @@ export default function ScreenshotGuesser() {
   const [gaveUp, setGaveUp] = useState(false);
   const [earnedPoints, setEarnedPoints] = useState<number | null>(null);
   const [inputValue, setInputValue] = useState("");
+  const scoreSubmittedRef = useRef(false);
 
   const { user } = useAuth();
 
@@ -106,15 +107,16 @@ export default function ScreenshotGuesser() {
     setGaveUp(false);
     setEarnedPoints(null);
     setInputValue("");
+    scoreSubmittedRef.current = false;
   };
 
-  // Save score when a round ends with points earned
+  // Save score once when a round ends with a positive cumulative score
   useEffect(() => {
-    if (revealed && user && totalScore > 0) {
+    if (revealed && user && totalScore > 0 && !scoreSubmittedRef.current) {
+      scoreSubmittedRef.current = true;
       submitScore("screenshot", user.id, user.username, totalScore);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [revealed]);
+  }, [revealed, user, totalScore]);
 
   const attemptsLeft = MAX_ATTEMPTS - wrongGuesses;
   const potentialPoints = calcPoints(wrongGuesses, colorOpened);

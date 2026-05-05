@@ -38,11 +38,12 @@ export function signIn(username: string): { user: User | null; error?: string } 
 }
 
 export function signUp(username: string): { user: User | null; error?: string } {
-  const key = username.trim().toLowerCase();
+  const trimmed = username.trim();
+  const key = trimmed.toLowerCase();
   if (!key) return { user: null, error: "Username cannot be empty." };
   if (key.length < 3) return { user: null, error: "Username must be at least 3 characters." };
   if (key.length > 20) return { user: null, error: "Username must be 20 characters or fewer." };
-  if (!/^[a-z0-9_]+$/.test(key)) {
+  if (!/^[a-z0-9_]+$/i.test(trimmed)) {
     return { user: null, error: "Username can only contain letters, numbers, and underscores." };
   }
 
@@ -53,7 +54,7 @@ export function signUp(username: string): { user: User | null; error?: string } 
 
   const user: User = {
     id: `${key}-${Date.now()}`,
-    username: username.trim(),
+    username: trimmed,
     createdAt: Date.now(),
   };
 

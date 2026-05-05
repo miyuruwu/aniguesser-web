@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, ArrowRight, CheckCircle2, XCircle, Flag, BookOpen } from "lucide-react";
 import { Anime, GuessResult } from "@/types/anime";
@@ -125,6 +125,7 @@ export default function AnimeWordle() {
   const [inputValue, setInputValue] = useState("");
   const maxGuesses = 8;
   const SYNOPSIS_HINT_THRESHOLD = 5;
+  const scoreSubmittedRef = useRef(false);
 
   const { user } = useAuth();
 
@@ -166,15 +167,17 @@ export default function AnimeWordle() {
     setWon(false);
     setGaveUp(false);
     setInputValue("");
+    scoreSubmittedRef.current = false;
   };
 
-  // Save score when game ends (win/lose/give up)
+  // Save score when game ends (win/lose/give up) — submit only once per round
   useEffect(() => {
-    if ((won || gaveUp || guesses.length >= maxGuesses) && user && totalScore > 0) {
+    const gameEnded = won || gaveUp || guesses.length >= maxGuesses;
+    if (gameEnded && user && totalScore > 0 && !scoreSubmittedRef.current) {
+      scoreSubmittedRef.current = true;
       submitScore("wordle", user.id, user.username, totalScore);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [won, gaveUp, guesses.length]);
+  }, [won, gaveUp, guesses.length, user, totalScore]);
 
   const failed = !won && !gaveUp && guesses.length >= maxGuesses;
 

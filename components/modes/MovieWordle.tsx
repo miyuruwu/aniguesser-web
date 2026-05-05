@@ -481,6 +481,7 @@ export default function MovieWordle() {
   const [gaveUp, setGaveUp] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showTaglineHint, setShowTaglineHint] = useState(false);
+  const scoreSubmittedRef = useRef(false);
 
   const { stats, updateStats } = useMovieStats();
   const { playGuess, playWin, playLose } = useSound();
@@ -538,15 +539,16 @@ export default function MovieWordle() {
     setGaveUp(false);
     setCopied(false);
     setShowTaglineHint(false);
+    scoreSubmittedRef.current = false;
   };
 
-  // Save score to leaderboard when game ends with a positive score
+  // Save score to leaderboard once when game ends with a positive score
   useEffect(() => {
-    if (gameOver && user && totalScore > 0) {
+    if (gameOver && user && totalScore > 0 && !scoreSubmittedRef.current) {
+      scoreSubmittedRef.current = true;
       submitScore("movie", user.id, user.username, totalScore);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameOver]);
+  }, [gameOver, user, totalScore]);
 
   const handleShare = useCallback(async () => {
     const text = buildShareText(guesses, won, MAX_GUESSES);
