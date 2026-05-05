@@ -6,6 +6,7 @@ import Image from "next/image";
 import { GameMode } from "@/types/anime";
 import AnimeWordle from "@/components/modes/AnimeWordle";
 import ScreenshotGuesser from "@/components/modes/ScreenshotGuesser";
+import MovieWordle from "@/components/modes/MovieWordle";
 
 export default function HomePage() {
   const [activeMode, setActiveMode] = useState<GameMode>("home");
@@ -48,6 +49,15 @@ export default function HomePage() {
               <motion.div layoutId="nav-line" className="absolute bottom-1 left-5 right-5 h-0.5 bg-white rounded-full" transition={{ type: "spring", duration: 0.5 }} />
             )}
             <span className="relative z-10 uppercase tracking-widest text-xs">ANIME WORDLE</span>
+          </button>
+          <button
+            onClick={() => setActiveMode("movie")}
+            className={`relative px-5 py-2 text-sm font-semibold transition-all ${activeMode === 'movie' ? 'text-white' : 'text-gray-300 hover:text-white'}`}
+          >
+            {activeMode === 'movie' && (
+              <motion.div layoutId="nav-line" className="absolute bottom-1 left-5 right-5 h-0.5 bg-white rounded-full" transition={{ type: "spring", duration: 0.5 }} />
+            )}
+            <span className="relative z-10 uppercase tracking-widest text-xs">MOVIE WORDLE</span>
           </button>
         </nav>
 
@@ -141,6 +151,19 @@ export default function HomePage() {
               className="w-full max-w-5xl mx-auto mt-24"
             >
               <ScreenshotGuesser />
+            </motion.div>
+          )}
+
+          {activeMode === "movie" && (
+            <motion.div
+              key="movie-game"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+              className="w-full max-w-5xl mx-auto mt-24"
+            >
+              <MovieWordle />
             </motion.div>
           )}
         </AnimatePresence>
