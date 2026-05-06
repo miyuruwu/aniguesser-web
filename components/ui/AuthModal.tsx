@@ -6,15 +6,24 @@ import { X, User, LogIn, UserPlus } from "lucide-react";
 
 interface AuthModalProps {
   onSignIn: (username: string) => { error?: string };
-  onSignUp: (username: string) => { error?: string };
+  onSignUp: (details: { username: string; email: string; password: string }) => {
+    error?: string;
+  };
   onClose: () => void;
 }
 
 export default function AuthModal({ onSignIn, onSignUp, onClose }: AuthModalProps) {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const isSignup = mode === "signup";
+  const canSubmit = isSignup
+    ? Boolean(username.trim() && email.trim() && password.trim())
+    : Boolean(username.trim());
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,7 +31,9 @@ export default function AuthModal({ onSignIn, onSignUp, onClose }: AuthModalProp
     setLoading(true);
 
     const result =
-      mode === "signin" ? onSignIn(username) : onSignUp(username);
+      mode === "signin"
+        ? onSignIn(username)
+        : onSignUp({ username, email, password });
 
     setLoading(false);
 
@@ -37,6 +48,8 @@ export default function AuthModal({ onSignIn, onSignUp, onClose }: AuthModalProp
     setMode((m) => (m === "signin" ? "signup" : "signin"));
     setError(null);
     setUsername("");
+    setEmail("");
+    setPassword("");
   };
 
   return (
@@ -85,6 +98,35 @@ export default function AuthModal({ onSignIn, onSignUp, onClose }: AuthModalProp
             />
           </div>
 
+          {isSignup && (
+            <>
+              <div>
+                <label className="block text-xs text-gray-400 mb-1.5 font-medium uppercase tracking-wider">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className="w-full px-3 py-2.5 rounded-xl bg-anime-darker border border-anime-border text-white placeholder-gray-600 focus:outline-none focus:border-anime-accent/60 transition-colors text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 mb-1.5 font-medium uppercase tracking-wider">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Create a password"
+                  className="w-full px-3 py-2.5 rounded-xl bg-anime-darker border border-anime-border text-white placeholder-gray-600 focus:outline-none focus:border-anime-accent/60 transition-colors text-sm"
+                />
+              </div>
+            </>
+          )}
+
           {/* Error */}
           <AnimatePresence>
             {error && (
@@ -101,7 +143,7 @@ export default function AuthModal({ onSignIn, onSignUp, onClose }: AuthModalProp
 
           <button
             type="submit"
-            disabled={loading || !username.trim()}
+            disabled={loading || !canSubmit}
             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-anime-accent hover:bg-anime-accent/80 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm transition-colors"
           >
             {mode === "signin" ? (
@@ -129,9 +171,9 @@ export default function AuthModal({ onSignIn, onSignUp, onClose }: AuthModalProp
           </button>
         </div>
 
-        {mode === "signup" && (
+        {isSignup && (
           <p className="mt-3 text-center text-xs text-gray-600">
-            3–20 chars · letters, numbers and underscores only
+            Username: 3–20 chars · letters, numbers and underscores only
           </p>
         )}
       </motion.div>
