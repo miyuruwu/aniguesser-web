@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { COOKIE_NAME_EXPORT } from "@/lib/session";
+import { COOKIE_NAME } from "@/lib/session";
 
 export async function POST() {
   const response = NextResponse.json({ success: true });
   response.cookies.set({
-    name: COOKIE_NAME_EXPORT,
+    name: COOKIE_NAME,
     value: "",
     httpOnly: true,
     maxAge: 0,

@@ -13,8 +13,9 @@ export async function POST(request: NextRequest) {
     };
 
     const trimmed = (username ?? "").trim();
+    // Store and look up usernames in lowercase for consistent case-insensitive matching
     const key = trimmed.toLowerCase();
-    const trimmedEmail = (email ?? "").trim();
+    const trimmedEmail = (email ?? "").trim().toLowerCase();
     const trimmedPassword = (password ?? "").trim();
 
     if (!key) {
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    if (!/^[a-z0-9_]+$/i.test(trimmed)) {
+    if (!/^[a-z0-9_]+$/.test(key)) {
       return NextResponse.json(
         { error: "Username can only contain letters, numbers, and underscores." },
         { status: 400 }
@@ -41,7 +42,8 @@ export async function POST(request: NextRequest) {
     if (!trimmedEmail) {
       return NextResponse.json({ error: "Email cannot be empty." }, { status: 400 });
     }
-    if (!/^\S+@\S+\.\S+$/.test(trimmedEmail)) {
+    // ReDoS-safe email format check (dots excluded from domain segments)
+    if (!/^[^@\s]+@[^@\s.]+\.[^@\s.]+$/.test(trimmedEmail)) {
       return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
     }
     if (!trimmedPassword) {
@@ -54,7 +56,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const existing = await prisma.user.findUnique({ where: { username: trimmed } });
+    const existing = await prisma.user.findUnique({ where: { username: key } });
     if (existing) {
       return NextResponse.json(
         { error: "Username already taken. Try signing in instead!" },
@@ -74,7 +76,7 @@ export async function POST(request: NextRequest) {
 
     const user = await prisma.user.create({
       data: {
-        username: trimmed,
+        username: key,
         email: trimmedEmail,
         password: hashedPassword,
       },

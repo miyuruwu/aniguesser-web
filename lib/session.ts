@@ -1,10 +1,19 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
-const COOKIE_NAME = "aniguesser-session";
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET ?? "changeme-replace-with-a-long-random-secret"
-);
+export const COOKIE_NAME = "aniguesser-session";
+
+function getJwtSecret(): Uint8Array {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error(
+      "JWT_SECRET environment variable is not set. " +
+        "Please add it to your .env file. " +
+        "Generate one with: openssl rand -base64 32"
+    );
+  }
+  return new TextEncoder().encode(secret);
+}
 
 export async function signToken(payload: {
   userId: string;
@@ -14,14 +23,14 @@ export async function signToken(payload: {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
-    .sign(JWT_SECRET);
+    .sign(getJwtSecret());
 }
 
 export async function verifyToken(
   token: string
 ): Promise<{ userId: string; username: string } | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const { payload } = await jwtVerify(token, getJwtSecret());
     return payload as { userId: string; username: string };
   } catch {
     return null;
@@ -49,5 +58,3 @@ export function sessionCookieOptions(token: string) {
     path: "/",
   };
 }
-
-export const COOKIE_NAME_EXPORT = COOKIE_NAME;
