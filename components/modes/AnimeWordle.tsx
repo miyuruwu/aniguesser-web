@@ -123,6 +123,7 @@ export default function AnimeWordle() {
   const [won, setWon] = useState(false);
   const [gaveUp, setGaveUp] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const [scoreSubmitError, setScoreSubmitError] = useState(false);
   const maxGuesses = 8;
   const SYNOPSIS_HINT_THRESHOLD = 5;
   const scoreSubmittedRef = useRef(false);
@@ -150,7 +151,7 @@ export default function AnimeWordle() {
 
       if (anime.id === target.id || anime.title === target.title) {
         setWon(true);
-        setTotalScore(s => s + (maxGuesses - guesses.length) * 10);
+        setTotalScore((s) => s + (maxGuesses - guesses.length) * 10);
       }
     },
     [guesses, target, won, gaveUp]
@@ -167,6 +168,7 @@ export default function AnimeWordle() {
     setWon(false);
     setGaveUp(false);
     setInputValue("");
+    setScoreSubmitError(false);
     scoreSubmittedRef.current = false;
   };
 
@@ -177,7 +179,15 @@ export default function AnimeWordle() {
     // Without this guard, user===null while loading causes the score to be skipped.
     if (gameEnded && !authLoading && user && totalScore > 0 && !scoreSubmittedRef.current) {
       scoreSubmittedRef.current = true;
-      submitScore("wordle", user.id, user.username, totalScore);
+      void (async () => {
+        const ok = await submitScore("wordle", user.id, user.username, totalScore);
+        if (!ok) {
+          scoreSubmittedRef.current = false;
+          setScoreSubmitError(true);
+          return;
+        }
+        setScoreSubmitError(false);
+      })();
     }
   }, [won, gaveUp, guesses.length, user, authLoading, totalScore]);
 
@@ -287,6 +297,12 @@ export default function AnimeWordle() {
         )}
       </AnimatePresence>
 
+      {scoreSubmitError && (
+        <p className="text-xs text-red-400 text-center">
+          Score not saved. Please check your connection and sign in again.
+        </p>
+      )}
+
       {/* Synopsis hint after 5 wrong guesses */}
       <AnimatePresence>
         {showSynopsisHint && (
@@ -319,7 +335,7 @@ export default function AnimeWordle() {
           />
           <button
             onClick={handleGiveUp}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-anime-card border border-red-500/40 text-red-400 hover:bg-red-500/10 hover:border-red-500/70 transition-colors font-medium text-sm flex-shrink-0"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-anime-card border border-red-500/40 text-red-400 hover:bg-red-500/10 hover:border-red-500/70 transition-colors font-medium"
             title="Give up and reveal the answer"
           >
             <Flag className="w-4 h-4" />
