@@ -15,7 +15,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="font-sans antialiased bg-anime-darker">
+      <body className="font-sans antialiased text-white min-h-screen relative">
+        <div className="fixed inset-0 z-[-1] bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-[#132c33] via-[#0d161a] to-[#040809]" />
         {children}
       </body>
     </html>
