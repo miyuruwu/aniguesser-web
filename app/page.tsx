@@ -23,14 +23,8 @@ export default function HomePage() {
       <AnimatePresence>
         {showAuthModal && (
           <AuthModal
-            onSignIn={({ identifier, password }) => {
-              const result = login(identifier, password);
-              return result;
-            }}
-            onSignUp={({ username, email, password }) => {
-              const result = register(username, email, password);
-              return result;
-            }}
+            onSignIn={(username) => login(username)}
+            onSignUp={({ username }) => register(username)}
             onClose={() => setShowAuthModal(false)}
           />
         )}
