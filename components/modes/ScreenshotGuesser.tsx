@@ -47,7 +47,7 @@ export default function ScreenshotGuesser() {
   const [inputValue, setInputValue] = useState("");
   const scoreSubmittedRef = useRef(false);
 
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const blurPx = BLUR_STEPS[Math.min(wrongGuesses, BLUR_STEPS.length - 1)];
   const imageFilter = `blur(${blurPx}px)${colorOpened ? "" : " grayscale(100%)"}`;
@@ -112,11 +112,11 @@ export default function ScreenshotGuesser() {
 
   // Save score once when a round ends with a positive cumulative score
   useEffect(() => {
-    if (revealed && user && totalScore > 0 && !scoreSubmittedRef.current) {
+    if (revealed && !authLoading && user && totalScore > 0 && !scoreSubmittedRef.current) {
       scoreSubmittedRef.current = true;
       submitScore("screenshot", user.id, user.username, totalScore);
     }
-  }, [revealed, user, totalScore]);
+  }, [revealed, user, authLoading, totalScore]);
 
   const attemptsLeft = MAX_ATTEMPTS - wrongGuesses;
   const potentialPoints = calcPoints(wrongGuesses, colorOpened);

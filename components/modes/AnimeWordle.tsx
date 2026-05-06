@@ -127,7 +127,7 @@ export default function AnimeWordle() {
   const SYNOPSIS_HINT_THRESHOLD = 5;
   const scoreSubmittedRef = useRef(false);
 
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   // Count wrong guesses (all guesses are wrong until you guess correctly)
   const wrongGuesses = guesses.length;
@@ -173,11 +173,13 @@ export default function AnimeWordle() {
   // Save score when game ends (win/lose/give up) — submit only once per round
   useEffect(() => {
     const gameEnded = won || gaveUp || guesses.length >= maxGuesses;
-    if (gameEnded && user && totalScore > 0 && !scoreSubmittedRef.current) {
+    // Wait until the session check finishes before deciding whether to submit.
+    // Without this guard, user===null while loading causes the score to be skipped.
+    if (gameEnded && !authLoading && user && totalScore > 0 && !scoreSubmittedRef.current) {
       scoreSubmittedRef.current = true;
       submitScore("wordle", user.id, user.username, totalScore);
     }
-  }, [won, gaveUp, guesses.length, user, totalScore]);
+  }, [won, gaveUp, guesses.length, user, authLoading, totalScore]);
 
   const failed = !won && !gaveUp && guesses.length >= maxGuesses;
 

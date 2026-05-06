@@ -5,12 +5,16 @@ import { User } from "@/types/anime";
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
+  // Tracks whether the initial session check has finished.
+  // While true, consumers should not treat user===null as "logged out".
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch("/api/auth/me", { cache: "no-store", credentials: "include" })
       .then((r) => (r.ok ? r.json() : { user: null }))
       .then((data: { user: User | null }) => setUser(data.user ?? null))
-      .catch(() => setUser(null));
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false));
   }, []);
 
   const login = useCallback(
@@ -57,5 +61,5 @@ export function useAuth() {
     setUser(null);
   }, []);
 
-  return { user, login, register, logout };
+  return { user, loading, login, register, logout };
 }
