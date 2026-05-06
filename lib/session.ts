@@ -47,14 +47,23 @@ export async function getSessionUser(): Promise<{
   return verifyToken(token);
 }
 
-export function sessionCookieOptions(token: string) {
-  return {
-    name: COOKIE_NAME,
-    value: token,
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax" as const,
-    maxAge: 60 * 60 * 24 * 7, // 7 days
-    path: "/",
-  };
+/**
+ * Returns [name, value, options] as separate arguments for Next.js 15.
+ * Usage: response.cookies.set(...sessionCookieArgs(token))
+ *
+ * Next.js 15 changed the cookie API — response.cookies.set(optionsObject)
+ * no longer works; it must be called as set(name, value, options).
+ */
+export function sessionCookieArgs(token: string): [string, string, object] {
+  return [
+    COOKIE_NAME,
+    token,
+    {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax" as const,
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: "/",
+    },
+  ];
 }

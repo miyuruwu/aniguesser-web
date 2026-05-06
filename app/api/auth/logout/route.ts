@@ -3,9 +3,7 @@ import { COOKIE_NAME } from "@/lib/session";
 
 export async function POST() {
   const response = NextResponse.json({ success: true });
-  response.cookies.set({
-    name: COOKIE_NAME,
-    value: "",
+  response.cookies.set(COOKIE_NAME, "", {
     httpOnly: true,
     maxAge: 0,
     path: "/",
