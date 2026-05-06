@@ -14,8 +14,11 @@ Guess the target anime in up to 8 tries. Each guess reveals comparison clues:
 ### 2. Screenshot Guesser
 Identify an anime from its cover art. Type or search the anime title with autocomplete suggestions.
 
-### 3. Character & Series Guesser
-Identify an anime character and their series. Score points for one or both correct answers.
+### 3. Movie Wordle
+Guess the target anime in up to 8 tries. Each guess reveals comparison clues:
+- **Release Year** — `Earlier`, `Later`, or `Correct`
+- **Rating/Score** — `Higher`, `Lower`, or `Correct`
+- **Genres** — matching genres are highlighted in green
 
 ---
 
