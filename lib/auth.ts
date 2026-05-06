@@ -64,6 +64,35 @@ export function signUp(username: string): { user: User | null; error?: string } 
   return { user };
 }
 
+export function deleteAccount(username: string): { success: boolean; error?: string } {
+  if (typeof window === "undefined") return { success: false, error: "Not in browser." };
+
+  const key = username.trim().toLowerCase();
+  if (!key) return { success: false, error: "Username cannot be empty." };
+
+  const users = getUsers();
+  if (!users[key]) {
+    return { success: false, error: "Account not found." };
+  }
+
+  delete users[key];
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+
+  const current = getCurrentUser();
+  if (current?.username.trim().toLowerCase() === key) {
+    localStorage.removeItem(CURRENT_USER_KEY);
+  }
+
+  return { success: true };
+}
+
+export function clearAllUsers(): void {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem(USERS_KEY);
+    localStorage.removeItem(CURRENT_USER_KEY);
+  }
+}
+
 export function signOut(): void {
   if (typeof window !== "undefined") {
     localStorage.removeItem(CURRENT_USER_KEY);
