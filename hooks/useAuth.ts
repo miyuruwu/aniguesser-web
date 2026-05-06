@@ -7,7 +7,7 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    fetch("/api/auth/me")
+    fetch("/api/auth/me", { cache: "no-store", credentials: "include" })
       .then((r) => (r.ok ? r.json() : { user: null }))
       .then((data: { user: User | null }) => setUser(data.user ?? null))
       .catch(() => setUser(null));
@@ -21,6 +21,7 @@ export function useAuth() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ username, password }),
       });
       const data = (await res.json()) as { user?: User; error?: string };
@@ -40,6 +41,7 @@ export function useAuth() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(details),
       });
       const data = (await res.json()) as { user?: User; error?: string };
@@ -51,7 +53,7 @@ export function useAuth() {
   );
 
   const logout = useCallback(async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
+    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
     setUser(null);
   }, []);
 
