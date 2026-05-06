@@ -15,7 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 export default function HomePage() {
   const [activeMode, setActiveMode] = useState<GameMode>("home");
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const { user, login, register, logout } = useAuth();
+  const { user, loading, login, register, logout } = useAuth();
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -91,7 +91,9 @@ export default function HomePage() {
         </nav>
 
         <div className="z-10 flex items-center gap-2">
-          {user ? (
+          {loading ? (
+            <span className="text-xs text-gray-500 tracking-wide">Checking session</span>
+          ) : user ? (
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1.5 text-sm text-gray-300">
                 <User className="w-3.5 h-3.5 text-anime-accent" />
