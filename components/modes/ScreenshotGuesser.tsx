@@ -45,6 +45,7 @@ export default function ScreenshotGuesser() {
   const [gaveUp, setGaveUp] = useState(false);
   const [earnedPoints, setEarnedPoints] = useState<number | null>(null);
   const [inputValue, setInputValue] = useState("");
+  const [scoreSubmitError, setScoreSubmitError] = useState(false);
   const scoreSubmittedRef = useRef(false);
 
   const { user, loading: authLoading } = useAuth();
@@ -107,6 +108,7 @@ export default function ScreenshotGuesser() {
     setGaveUp(false);
     setEarnedPoints(null);
     setInputValue("");
+    setScoreSubmitError(false);
     scoreSubmittedRef.current = false;
   };
 
@@ -114,7 +116,15 @@ export default function ScreenshotGuesser() {
   useEffect(() => {
     if (revealed && !authLoading && user && totalScore > 0 && !scoreSubmittedRef.current) {
       scoreSubmittedRef.current = true;
-      submitScore("screenshot", user.id, user.username, totalScore);
+      void (async () => {
+        const ok = await submitScore("screenshot", user.id, user.username, totalScore);
+        if (!ok) {
+          scoreSubmittedRef.current = false;
+          setScoreSubmitError(true);
+          return;
+        }
+        setScoreSubmitError(false);
+      })();
     }
   }, [revealed, user, authLoading, totalScore]);
 
@@ -156,6 +166,12 @@ export default function ScreenshotGuesser() {
         </div>
       </div>
 
+      {scoreSubmitError && (
+        <p className="text-xs text-red-400 text-center">
+          Score not saved. Please check your connection and sign in again.
+        </p>
+      )}
+
       {/* Image Card */}
       <Card glow="cyan" className="overflow-hidden p-0">
         <div className="relative aspect-[16/9] bg-anime-darker flex items-center justify-center overflow-hidden">
@@ -164,8 +180,7 @@ export default function ScreenshotGuesser() {
             src={current.screenshotUrl}
             alt="Guess this anime"
             style={{ filter: revealed ? "none" : imageFilter }}
-            className={`w-full h-full object-cover transition-all duration-500 ${!revealed ? "scale-110" : ""
-              }`}
+            className={`w-full h-full object-cover transition-all duration-500 ${!revealed ? "scale-110" : ""}`}
             onError={(e) => {
               (e.target as HTMLImageElement).src =
                 "https://via.placeholder.com/640x360/13132a/6c63ff?text=Anime+Screenshot";
@@ -198,7 +213,7 @@ export default function ScreenshotGuesser() {
 
           <button
             onClick={handleGiveUp}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-anime-card border border-red-500/40 text-red-400 hover:bg-red-500/10 hover:border-red-500/70 transition-colors font-medium text-sm"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-anime-card border border-red-500/40 text-red-400 hover:bg-red-500/10 hover:border-red-500/70 transition-colors"
           >
             <Flag className="w-4 h-4" />
             Give up
@@ -333,4 +348,3 @@ export default function ScreenshotGuesser() {
     </div>
   );
 }
-
