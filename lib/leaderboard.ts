@@ -8,6 +8,8 @@ export interface LeaderboardData {
 
 export type LeaderboardMode = keyof LeaderboardData;
 
+export const LEADERBOARD_UPDATED_EVENT = "leaderboard:updated";
+
 const EMPTY: LeaderboardData = { wordle: [], screenshot: [], movie: [] };
 
 export async function getLeaderboard(): Promise<LeaderboardData> {
@@ -39,6 +41,10 @@ export async function submitScore(
       const message = await res.text();
       console.warn("Leaderboard submit failed:", res.status, message);
       return false;
+    }
+
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event(LEADERBOARD_UPDATED_EVENT));
     }
 
     return true;
