@@ -92,7 +92,8 @@ export async function POST(request: NextRequest) {
     response.cookies.set(sessionCookieOptions(token));
 
     return response;
-  } catch {
+  } catch (error) {
+    console.error("Register API error:", error);
     return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }
 }
