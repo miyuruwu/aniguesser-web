@@ -428,7 +428,7 @@ function MovieAutocompleteInput({ onSelect, disabled, guessedIds }: MovieAutocom
           onKeyDown={handleKeyDown}
           placeholder="Search for a movie..."
           disabled={disabled}
-          className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-anime-card border border-anime-border text-white placeholder-gray-600 focus:outline-none focus:border-anime-pink/60 transition-colors disabled:opacity-50"
+          className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-anime-card border border-anime-border text-white placeholder-gray-600 focus:outline-none focus:border-anime-pink/60 transition-colors"
         />
       </div>
       <AnimatePresence>
@@ -481,6 +481,7 @@ export default function MovieWordle() {
   const [gaveUp, setGaveUp] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showTaglineHint, setShowTaglineHint] = useState(false);
+  const [scoreSubmitError, setScoreSubmitError] = useState(false);
   const scoreSubmittedRef = useRef(false);
 
   const { stats, updateStats } = useMovieStats();
@@ -513,7 +514,7 @@ export default function MovieWordle() {
         setGameOver(true);
         updateStats("win", newGuesses.length);
         playWin();
-        setTotalScore(s => s + (MAX_GUESSES - guesses.length) * 15);
+        setTotalScore((s) => s + (MAX_GUESSES - guesses.length) * 15);
       } else if (newGuesses.length >= MAX_GUESSES) {
         setGameOver(true);
         updateStats("lose");
@@ -539,6 +540,7 @@ export default function MovieWordle() {
     setGaveUp(false);
     setCopied(false);
     setShowTaglineHint(false);
+    setScoreSubmitError(false);
     scoreSubmittedRef.current = false;
   };
 
@@ -546,7 +548,15 @@ export default function MovieWordle() {
   useEffect(() => {
     if (gameOver && !authLoading && user && totalScore > 0 && !scoreSubmittedRef.current) {
       scoreSubmittedRef.current = true;
-      submitScore("movie", user.id, user.username, totalScore);
+      void (async () => {
+        const ok = await submitScore("movie", user.id, user.username, totalScore);
+        if (!ok) {
+          scoreSubmittedRef.current = false;
+          setScoreSubmitError(true);
+          return;
+        }
+        setScoreSubmitError(false);
+      })();
     }
   }, [gameOver, user, authLoading, totalScore]);
 
@@ -610,6 +620,12 @@ export default function MovieWordle() {
           </button>
         </div>
       </div>
+
+      {scoreSubmitError && (
+        <p className="text-xs text-red-400 text-center">
+          Score not saved. Please check your connection and sign in again.
+        </p>
+      )}
 
       <div className="flex flex-wrap gap-1.5 text-xs text-gray-500 items-center justify-center">
         <span>Hints:</span>
@@ -694,7 +710,7 @@ export default function MovieWordle() {
       {!gameOver && (
         <button
           onClick={handleGiveUp}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-anime-card border border-red-500/40 text-red-400 hover:bg-red-500/10 hover:border-red-500/70 transition-colors font-medium text-sm"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-anime-card border border-red-500/40 text-red-400 hover:bg-red-500/10 hover:border-red-500/70 transition-colors"
         >
           <Flag className="w-4 h-4" />
           Give Up
@@ -714,8 +730,8 @@ export default function MovieWordle() {
               {won
                 ? `🎉 Correct in ${guesses.length} guess${guesses.length !== 1 ? "es" : ""}!`
                 : gaveUp
-                ? `🏳️ You gave up! The answer was \u201c${target.title}\u201d`
-                : `😞 The answer was \u201c${target.title}\u201d`}
+                ? `🏳️ You gave up! The answer was “${target.title}”`
+                : `😞 The answer was “${target.title}”`}
             </p>
 
             <PosterReveal movie={target} won={won} />
