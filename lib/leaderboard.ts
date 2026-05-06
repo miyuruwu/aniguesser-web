@@ -1,8 +1,5 @@
 import { GameScoreEntry } from "@/types/anime";
 
-const LEADERBOARD_KEY = "aniguesser-leaderboard";
-const MAX_ENTRIES = 20;
-
 export interface LeaderboardData {
   wordle: GameScoreEntry[];
   screenshot: GameScoreEntry[];
@@ -11,40 +8,32 @@ export interface LeaderboardData {
 
 export type LeaderboardMode = keyof LeaderboardData;
 
-export function getLeaderboard(): LeaderboardData {
-  if (typeof window === "undefined") {
-    return { wordle: [], screenshot: [], movie: [] };
-  }
+const EMPTY: LeaderboardData = { wordle: [], screenshot: [], movie: [] };
+
+export async function getLeaderboard(): Promise<LeaderboardData> {
   try {
-    const raw = localStorage.getItem(LEADERBOARD_KEY);
-    return raw
-      ? (JSON.parse(raw) as LeaderboardData)
-      : { wordle: [], screenshot: [], movie: [] };
+    const res = await fetch("/api/leaderboard", { cache: "no-store" });
+    if (!res.ok) return EMPTY;
+    return (await res.json()) as LeaderboardData;
   } catch {
-    return { wordle: [], screenshot: [], movie: [] };
+    return EMPTY;
   }
 }
 
-export function submitScore(
+export async function submitScore(
   mode: LeaderboardMode,
   userId: string,
   username: string,
   score: number
-): void {
-  if (typeof window === "undefined" || score <= 0) return;
-
-  const data = getLeaderboard();
-  const entries = data[mode];
-
-  const existingIdx = entries.findIndex((e) => e.userId === userId);
-  if (existingIdx >= 0) {
-    if (score > entries[existingIdx].score) {
-      entries[existingIdx] = { userId, username, score, timestamp: Date.now() };
-    }
-  } else {
-    entries.push({ userId, username, score, timestamp: Date.now() });
+): Promise<void> {
+  if (score <= 0) return;
+  try {
+    await fetch("/api/leaderboard", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode, score }),
+    });
+  } catch {
+    // Fire-and-forget; silently ignore network failures
   }
-
-  data[mode] = entries.sort((a, b) => b.score - a.score).slice(0, MAX_ENTRIES);
-  localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(data));
 }

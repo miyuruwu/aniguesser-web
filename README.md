@@ -84,11 +84,14 @@ Anime Wordle and Screenshot Guesser use the **[Jikan API](https://jikan.moe/)** 
 aniguesser-web/
 ├── app/
 │   ├── api/
-│   │   └── auth/
-│   │       ├── login/route.ts       # POST — sign in with username + password
-│   │       ├── logout/route.ts      # POST — clear session cookie
-│   │       ├── me/route.ts          # GET  — return current user from session
-│   │       └── register/route.ts    # POST — create new account
+│   │   ├── auth/
+│   │   │   ├── login/route.ts       # POST — sign in with username + password
+│   │   │   ├── logout/route.ts      # POST — clear session cookie
+│   │   │   ├── me/route.ts          # GET  — return current user from session
+│   │   │   └── register/route.ts    # POST — create new account
+│   │   └── leaderboard/
+│   │       └── route.ts             # GET  — top scores (public)
+│   │                                # POST — submit/improve score (auth required)
 │   ├── globals.css          # Global styles + Tailwind
 │   ├── layout.tsx           # Root HTML layout
 │   └── page.tsx             # Main dashboard (client component)
@@ -110,11 +113,11 @@ aniguesser-web/
 │   ├── auth.ts              # (deprecated) — replaced by API routes
 │   ├── db.ts                # Prisma client singleton
 │   ├── jikan.ts             # Jikan API client + normalization
-│   ├── leaderboard.ts       # Leaderboard helpers
+│   ├── leaderboard.ts       # Leaderboard API helpers (fetch + submit)
 │   └── session.ts           # JWT sign/verify + cookie helpers
 ├── prisma/
 │   ├── migrations/          # Auto-generated SQL migrations
-│   └── schema.prisma        # Database schema (User model)
+│   └── schema.prisma        # Database schema (User + LeaderboardEntry models)
 └── types/
     └── anime.ts             # TypeScript data model definitions
 ```
