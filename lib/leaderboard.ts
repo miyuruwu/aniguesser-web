@@ -31,6 +31,7 @@ export async function submitScore(
     await fetch("/api/leaderboard", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include", // send the session cookie so the server can auth us
       body: JSON.stringify({ mode, score }),
     });
   } catch {

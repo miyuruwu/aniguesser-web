@@ -485,7 +485,7 @@ export default function MovieWordle() {
 
   const { stats, updateStats } = useMovieStats();
   const { playGuess, playWin, playLose } = useSound();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const SYNOPSIS_HINT_THRESHOLD = 5;
 
@@ -544,11 +544,11 @@ export default function MovieWordle() {
 
   // Save score to leaderboard once when game ends with a positive score
   useEffect(() => {
-    if (gameOver && user && totalScore > 0 && !scoreSubmittedRef.current) {
+    if (gameOver && !authLoading && user && totalScore > 0 && !scoreSubmittedRef.current) {
       scoreSubmittedRef.current = true;
       submitScore("movie", user.id, user.username, totalScore);
     }
-  }, [gameOver, user, totalScore]);
+  }, [gameOver, user, authLoading, totalScore]);
 
   const handleShare = useCallback(async () => {
     const text = buildShareText(guesses, won, MAX_GUESSES);
