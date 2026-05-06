@@ -92,7 +92,7 @@ export default function HomePage() {
 
         <div className="z-10 flex items-center gap-2">
           {loading ? (
-            <span className="text-xs text-gray-500 tracking-wide">Checking session</span>
+            <span className="text-xs text-gray-500 tracking-wide">Checking session…</span>
           ) : user ? (
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1.5 text-sm text-gray-300">
