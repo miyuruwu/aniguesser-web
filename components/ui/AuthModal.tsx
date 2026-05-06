@@ -5,10 +5,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, User, LogIn, UserPlus } from "lucide-react";
 
 interface AuthModalProps {
-  onSignIn: (username: string, password: string) => { error?: string };
-  onSignUp: (details: { username: string; email: string; password: string }) => {
+  onSignIn: (username: string, password: string) => Promise<{ error?: string }>;
+  onSignUp: (details: { username: string; email: string; password: string }) => Promise<{
     error?: string;
-  };
+  }>;
   onClose: () => void;
 }
 
@@ -25,15 +25,15 @@ export default function AuthModal({ onSignIn, onSignUp, onClose }: AuthModalProp
     ? Boolean(username.trim() && email.trim() && password.trim())
     : Boolean(username.trim() && password.trim());
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
     const result =
       mode === "signin"
-        ? onSignIn(username, password)
-        : onSignUp({ username, email, password });
+        ? await onSignIn(username, password)
+        : await onSignUp({ username, email, password });
 
     setLoading(false);
 

@@ -31,11 +31,24 @@ Identify an anime character and their series. Score points for one or both corre
 # Install dependencies
 npm install
 
+# Copy environment template and fill in values
+cp .env.example .env
+
+# Create and migrate the database
+npx prisma migrate dev
+
 # Start development server
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Environment Variables
+
+| Variable | Description | Example |
+|---|---|---|
+| `DATABASE_URL` | SQLite file path (or Postgres URL for production) | `file:./dev.db` |
+| `JWT_SECRET` | Long random secret for signing session tokens | `openssl rand -base64 32` |
 
 ### Build for Production
 
@@ -43,6 +56,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 npm run build
 npm start
 ```
+
+> **Production note:** Switch `DATABASE_URL` to a hosted Postgres instance (e.g., Neon, Supabase, PlanetScale) by updating your environment variables. The Prisma schema supports both SQLite and Postgres — only the `provider` field in `prisma/schema.prisma` needs changing.
 
 ---
 
@@ -65,23 +80,38 @@ Anime Wordle and Screenshot Guesser use the **[Jikan API](https://jikan.moe/)** 
 ```
 aniguesser-web/
 ├── app/
+│   ├── api/
+│   │   └── auth/
+│   │       ├── login/route.ts       # POST — sign in with username + password
+│   │       ├── logout/route.ts      # POST — clear session cookie
+│   │       ├── me/route.ts          # GET  — return current user from session
+│   │       └── register/route.ts    # POST — create new account
 │   ├── globals.css          # Global styles + Tailwind
 │   ├── layout.tsx           # Root HTML layout
 │   └── page.tsx             # Main dashboard (client component)
 ├── components/
-│   ├── Navigation.tsx       # Mode-switching nav bar
 │   ├── modes/
 │   │   ├── AnimeWordle.tsx      # Wordle game mode
 │   │   ├── ScreenshotGuesser.tsx # Screenshot game mode
-│   │   └── CharacterGuesser.tsx # Character game mode
+│   │   └── MovieWordle.tsx      # Movie wordle game mode
 │   └── ui/
+│       ├── AuthModal.tsx        # Sign in / sign up modal
 │       ├── AutocompleteInput.tsx # Jikan-backed search input
 │       ├── Badge.tsx            # Colored result badge
 │       └── Card.tsx             # Glassmorphism card container
 ├── data/
 │   └── animeData.ts         # 20 local fallback anime entries
+├── hooks/
+│   └── useAuth.ts           # Auth state + API calls (sign in/up/out)
 ├── lib/
-│   └── jikan.ts             # Jikan API client + normalization
+│   ├── auth.ts              # (deprecated) — replaced by API routes
+│   ├── db.ts                # Prisma client singleton
+│   ├── jikan.ts             # Jikan API client + normalization
+│   ├── leaderboard.ts       # Leaderboard helpers
+│   └── session.ts           # JWT sign/verify + cookie helpers
+├── prisma/
+│   ├── migrations/          # Auto-generated SQL migrations
+│   └── schema.prisma        # Database schema (User model)
 └── types/
     └── anime.ts             # TypeScript data model definitions
 ```
@@ -92,8 +122,11 @@ aniguesser-web/
 
 | Technology | Usage |
 |---|---|
-| Next.js 15 (App Router) | Framework + SSR |
+| Next.js 15 (App Router) | Framework + API routes |
 | TypeScript | Type safety |
+| Prisma 5 + SQLite | Database ORM + migrations |
+| bcryptjs | Password hashing |
+| jose | JWT session tokens |
 | Tailwind CSS | Styling |
 | Framer Motion | Animations & transitions |
 | Lucide React | Icons |
