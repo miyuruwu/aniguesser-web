@@ -91,7 +91,9 @@ export default function Leaderboard() {
     movie: [],
   });
 
-  const refresh = () => setData(getLeaderboard());
+  const refresh = () => {
+    getLeaderboard().then(setData);
+  };
 
   useEffect(() => {
     refresh();
