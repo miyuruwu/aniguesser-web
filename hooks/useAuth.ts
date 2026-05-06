@@ -12,8 +12,8 @@ export function useAuth() {
   }, []);
 
   const login = useCallback(
-    (username: string): { user: User | null; error?: string } => {
-      const result = signIn(username);
+    (username: string, password: string): { user: User | null; error?: string } => {
+      const result = signIn(username, password);
       if (result.user) setUser(result.user);
       return result;
     },
@@ -21,8 +21,12 @@ export function useAuth() {
   );
 
   const register = useCallback(
-    (username: string): { user: User | null; error?: string } => {
-      const result = signUp(username);
+    (details: {
+      username: string;
+      email: string;
+      password: string;
+    }): { user: User | null; error?: string } => {
+      const result = signUp(details);
       if (result.user) setUser(result.user);
       return result;
     },

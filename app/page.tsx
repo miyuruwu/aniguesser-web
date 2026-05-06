@@ -23,8 +23,8 @@ export default function HomePage() {
       <AnimatePresence>
         {showAuthModal && (
           <AuthModal
-            onSignIn={(username) => login(username)}
-            onSignUp={({ username }) => register(username)}
+            onSignIn={(username, password) => login(username, password)}
+            onSignUp={(details) => register(details)}
             onClose={() => setShowAuthModal(false)}
           />
         )}
@@ -142,7 +142,7 @@ export default function HomePage() {
                 <div className="flex items-center gap-4 pt-6">
                   <button
                     onClick={() => setActiveMode("screenshot")}
-                    className="flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/10 transition-all rounded-full text-white font-semibold text-sm tracking-wide group"
+                    className="flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/10 transition-all rounded-full text-white font-semibold text-sm tracking-wide gradiant"
                   >
                     Screenshot Guess
                     <span className="text-gray-400 group-hover:text-white transition-colors">&rsaquo;</span>

@@ -23,9 +23,14 @@ export function getCurrentUser(): User | null {
   }
 }
 
-export function signIn(username: string): { user: User | null; error?: string } {
+export function signIn(
+  username: string,
+  password: string
+): { user: User | null; error?: string } {
   const key = username.trim().toLowerCase();
+  const passwordTrimmed = password.trim();
   if (!key) return { user: null, error: "Username cannot be empty." };
+  if (!passwordTrimmed) return { user: null, error: "Password cannot be empty." };
 
   const users = getUsers();
   if (!users[key]) {
@@ -33,18 +38,37 @@ export function signIn(username: string): { user: User | null; error?: string } 
   }
 
   const user = users[key];
+  if (user.password !== passwordTrimmed) {
+    return { user: null, error: "Incorrect password." };
+  }
+
   localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
   return { user };
 }
 
-export function signUp(username: string): { user: User | null; error?: string } {
-  const trimmed = username.trim();
+export function signUp(details: {
+  username: string;
+  email: string;
+  password: string;
+}): { user: User | null; error?: string } {
+  const trimmed = details.username.trim();
   const key = trimmed.toLowerCase();
+  const trimmedEmail = details.email.trim();
+  const trimmedPassword = details.password.trim();
+
   if (!key) return { user: null, error: "Username cannot be empty." };
   if (key.length < 3) return { user: null, error: "Username must be at least 3 characters." };
   if (key.length > 20) return { user: null, error: "Username must be 20 characters or fewer." };
   if (!/^[a-z0-9_]+$/i.test(trimmed)) {
     return { user: null, error: "Username can only contain letters, numbers, and underscores." };
+  }
+  if (!trimmedEmail) return { user: null, error: "Email cannot be empty." };
+  if (!/^\S+@\S+\.\S+$/.test(trimmedEmail)) {
+    return { user: null, error: "Enter a valid email address." };
+  }
+  if (!trimmedPassword) return { user: null, error: "Password cannot be empty." };
+  if (trimmedPassword.length < 6) {
+    return { user: null, error: "Password must be at least 6 characters." };
   }
 
   const users = getUsers();
@@ -55,6 +79,8 @@ export function signUp(username: string): { user: User | null; error?: string } 
   const user: User = {
     id: `${key}-${Date.now()}`,
     username: trimmed,
+    email: trimmedEmail,
+    password: trimmedPassword,
     createdAt: Date.now(),
   };
 

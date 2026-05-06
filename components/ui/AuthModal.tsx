@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, User, LogIn, UserPlus } from "lucide-react";
 
 interface AuthModalProps {
-  onSignIn: (username: string) => { error?: string };
+  onSignIn: (username: string, password: string) => { error?: string };
   onSignUp: (details: { username: string; email: string; password: string }) => {
     error?: string;
   };
@@ -23,7 +23,7 @@ export default function AuthModal({ onSignIn, onSignUp, onClose }: AuthModalProp
   const isSignup = mode === "signup";
   const canSubmit = isSignup
     ? Boolean(username.trim() && email.trim() && password.trim())
-    : Boolean(username.trim());
+    : Boolean(username.trim() && password.trim());
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,7 +32,7 @@ export default function AuthModal({ onSignIn, onSignUp, onClose }: AuthModalProp
 
     const result =
       mode === "signin"
-        ? onSignIn(username)
+        ? onSignIn(username, password)
         : onSignUp({ username, email, password });
 
     setLoading(false);
@@ -99,33 +99,32 @@ export default function AuthModal({ onSignIn, onSignUp, onClose }: AuthModalProp
           </div>
 
           {isSignup && (
-            <>
-              <div>
-                <label className="block text-xs text-gray-400 mb-1.5 font-medium uppercase tracking-wider">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  className="w-full px-3 py-2.5 rounded-xl bg-anime-darker border border-anime-border text-white placeholder-gray-600 focus:outline-none focus:border-anime-accent/60 transition-colors text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 mb-1.5 font-medium uppercase tracking-wider">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Create a password"
-                  className="w-full px-3 py-2.5 rounded-xl bg-anime-darker border border-anime-border text-white placeholder-gray-600 focus:outline-none focus:border-anime-accent/60 transition-colors text-sm"
-                />
-              </div>
-            </>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1.5 font-medium uppercase tracking-wider">
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                className="w-full px-3 py-2.5 rounded-xl bg-anime-darker border border-anime-border text-white placeholder-gray-600 focus:outline-none focus:border-anime-accent/60 transition-colors text-sm"
+              />
+            </div>
           )}
+
+          <div>
+            <label className="block text-xs text-gray-400 mb-1.5 font-medium uppercase tracking-wider">
+              Password
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder={isSignup ? "Create a password" : "Your password"}
+              className="w-full px-3 py-2.5 rounded-xl bg-anime-darker border border-anime-border text-white placeholder-gray-600 focus:outline-none focus:border-anime-accent/60 transition-colors text-sm"
+            />
+          </div>
 
           {/* Error */}
           <AnimatePresence>
