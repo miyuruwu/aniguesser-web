@@ -1,12 +1,30 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  ReactNode,
+} from "react";
 import { User } from "@/types/anime";
 
-export function useAuth() {
+interface AuthState {
+  user: User | null;
+  loading: boolean;
+}
+
+interface AuthContextValue extends AuthState {
+  login: (username: string, password: string) => Promise<{ user: User | null; error?: string }>;
+  register: (details: { username: string; email: string; password: string }) => Promise<{ user: User | null; error?: string }>;
+  logout: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  // Tracks whether the initial session check has finished.
-  // While true, consumers should not treat user===null as "logged out".
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,10 +36,7 @@ export function useAuth() {
   }, []);
 
   const login = useCallback(
-    async (
-      username: string,
-      password: string
-    ): Promise<{ user: User | null; error?: string }> => {
+    async (username: string, password: string): Promise<{ user: User | null; error?: string }> => {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -37,11 +52,7 @@ export function useAuth() {
   );
 
   const register = useCallback(
-    async (details: {
-      username: string;
-      email: string;
-      password: string;
-    }): Promise<{ user: User | null; error?: string }> => {
+    async (details: { username: string; email: string; password: string }): Promise<{ user: User | null; error?: string }> => {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -61,5 +72,15 @@ export function useAuth() {
     setUser(null);
   }, []);
 
-  return { user, loading, login, register, logout };
+  return (
+    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth(): AuthContextValue {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used inside <AuthProvider>");
+  return ctx;
 }

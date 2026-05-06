@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import AuthProviderWrapper from "@/components/AuthProviderWrapper";
 
 export const metadata: Metadata = {
   title: "AniGuesser – Anime Guessing Games",
@@ -17,7 +18,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="font-sans antialiased text-white min-h-screen relative">
         <div className="fixed inset-0 z-[-1] bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-[#132c33] via-[#0d161a] to-[#040809]" />
-        {children}
+        <AuthProviderWrapper>{children}</AuthProviderWrapper>
       </body>
     </html>
   );
