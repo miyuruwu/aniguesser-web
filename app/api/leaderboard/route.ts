@@ -91,7 +91,14 @@ export async function POST(request: NextRequest) {
         data: { score, username, timestamp: new Date() },
       });
     } else {
-      entry = existing;
+      // Score didn't improve, but keep username in sync
+      entry =
+        existing.username !== username
+          ? await prisma.leaderboardEntry.update({
+              where: { userId_mode: { userId, mode } },
+              data: { username },
+            })
+          : existing;
     }
 
     return NextResponse.json({
