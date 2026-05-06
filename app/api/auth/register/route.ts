@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
-import { signToken, sessionCookieOptions } from "@/lib/session";
+import { signToken, sessionCookieArgs } from "@/lib/session";
 
 export async function POST(request: NextRequest) {
   try {
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
       { user: { ...user, createdAt: user.createdAt.getTime() } },
       { status: 201 }
     );
-    response.cookies.set(sessionCookieOptions(token));
+    response.cookies.set(...sessionCookieArgs(token));
 
     return response;
   } catch (error) {
